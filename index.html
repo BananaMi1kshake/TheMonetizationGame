@@ -101,6 +101,21 @@
         <div id="achievementsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
             <h2 class="text-2xl font-bold mb-4">Achievements</h2>
             <div id="achievementsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            
+            <div class="mt-8 border-t-2 border-gray-200 pt-6">
+                <h3 class="text-xl font-bold mb-4 text-center">Settings</h3>
+                <div class="max-w-md mx-auto space-y-3">
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+                        <label for="toggleOfflineProgress" class="font-semibold text-gray-700">Enable Offline Progress</label>
+                        <button id="toggleOfflineProgress" class="px-4 py-1 rounded-full font-semibold text-sm"></button>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+                        <label for="toggleStaffAnimation" class="font-semibold text-gray-700">Enable Staff Text Animation</label>
+                        <button id="toggleStaffAnimation" class="px-4 py-1 rounded-full font-semibold text-sm"></button>
+                    </div>
+                </div>
+            </div>
+
             <div class="mt-8 text-center space-x-4">
                 <button id="manualSaveBtn" class="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Manual Save</button>
                 <button id="resetProgressBtn" class="px-4 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Reset Progress</button>
@@ -170,6 +185,8 @@ const DOM = {
     statisticsList: document.getElementById('statisticsList'),
     manualSaveBtn: document.getElementById('manualSaveBtn'),
     resetProgressBtn: document.getElementById('resetProgressBtn'),
+    toggleOfflineProgress: document.getElementById('toggleOfflineProgress'),
+    toggleStaffAnimation: document.getElementById('toggleStaffAnimation'),
     // Modals & Popups
     achievementPopup: {
         el: document.getElementById('achievement-popup'),
@@ -397,6 +414,10 @@ class MonetizationGame {
                 playTime: 0,
                 waitedOutServerCrash: false,
             },
+            settings: {
+                offlineProgress: false,
+                staffTextAnimation:true
+            },
             lastSavedTime: Date.now(),
             activeEvent: null,
             eventCooldown: 180,
@@ -441,18 +462,16 @@ class MonetizationGame {
         if (savedData) {
             try {
                 const savedState = JSON.parse(savedData);
-                // Merge the saved state into the default state.
-                // This ensures any new properties in the default state are preserved if they don't exist in the save file.
                 const mergedState = { ...defaultState, ...savedState };
 
                 Object.assign(this, mergedState);
 
-                // Handle nested objects and Sets carefully to ensure they are also merged and not just replaced.
                 this.hiredStaff = new Set(savedState.hiredStaff || []);
                 this.upgrades = { ...defaultState.upgrades, ...savedState.upgrades };
                 this.achievements = { ...defaultState.achievements, ...savedState.achievements };
                 this.stats = { ...defaultState.stats, ...savedState.stats };
                 this.staffCosts = { ...defaultState.staffCosts, ...savedState.staffCosts };
+                this.settings = { ...defaultState.settings, ...savedState.settings };
 
                 this.handleOfflineProgress(savedState.lastSavedTime || Date.now());
             } catch (error) {
@@ -465,6 +484,8 @@ class MonetizationGame {
     }
     
     handleOfflineProgress(lastSavedTime) {
+        if (!this.settings.offlineProgress) return;
+
         const timeDiffSeconds = Math.floor((Date.now() - (lastSavedTime || Date.now())) / 1000);
         if (timeDiffSeconds > 5) {
             const offlineEarnings = (this.incomeRate || 0) * timeDiffSeconds * 0.5;
@@ -503,10 +524,12 @@ class MonetizationGame {
             this.stats.totalManualClicks++;
         }
 
-        if (this.emailCharIndex >= emailContent.length) {
-            this.emailCharIndex = 0;
+        if (isManualClick || this.settings.staffTextAnimation) {
+            if (this.emailCharIndex >= emailContent.length) {
+                this.emailCharIndex = 0;
+            }
+            this.emailCharIndex++;
         }
-        this.emailCharIndex++;
 
         const performAction = () => {
             if (Math.random() < this.getLeadChance()) {
@@ -534,7 +557,7 @@ class MonetizationGame {
 
     developLead(isManualClick = false) {
         if (this.leads <= 0) {
-            if (isManualClick) { // Only advance text on manual click if no leads
+            if (isManualClick) {
                  if (this.adCharIndex >= adScriptContent.length) {
                     this.adCharIndex = 0;
                 }
@@ -548,10 +571,12 @@ class MonetizationGame {
             this.stats.totalManualClicks++;
         }
 
-        if (this.adCharIndex >= adScriptContent.length) {
-            this.adCharIndex = 0;
+        if (isManualClick || this.settings.staffTextAnimation) {
+            if (this.adCharIndex >= adScriptContent.length) {
+                this.adCharIndex = 0;
+            }
+            this.adCharIndex++;
         }
-        this.adCharIndex++;
 
         let clickMultiplier = 1;
         if (isManualClick) {
@@ -644,6 +669,7 @@ class MonetizationGame {
         this.renderUpgrades();
         this.renderAchievements();
         this.renderStatistics();
+        this.renderSettings();
     }
 
     updateGlobalStats() {
@@ -788,6 +814,24 @@ class MonetizationGame {
         createStat('Total Leads Generated', this.stats.totalLeadsGenerated);
         createStat('Manual Clicks', this.stats.totalManualClicks);
         createStat('Play Time', formatTime(this.stats.playTime));
+    }
+
+    renderSettings() {
+        if (this.settings.offlineProgress) {
+            DOM.toggleOfflineProgress.textContent = 'ON';
+            DOM.toggleOfflineProgress.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-green-500 text-white';
+        } else {
+            DOM.toggleOfflineProgress.textContent = 'OFF';
+            DOM.toggleOfflineProgress.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-red-500 text-white';
+        }
+
+        if (this.settings.staffTextAnimation) {
+            DOM.toggleStaffAnimation.textContent = 'ON';
+            DOM.toggleStaffAnimation.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-green-500 text-white';
+        } else {
+            DOM.toggleStaffAnimation.textContent = 'OFF';
+            DOM.toggleStaffAnimation.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-red-500 text-white';
+        }
     }
 
     // --- Achievements & Popups ---
@@ -1037,6 +1081,15 @@ class MonetizationGame {
         });
         DOM.resetProgressBtn.addEventListener('click', () => this.reset());
         
+        DOM.toggleOfflineProgress.addEventListener('click', () => {
+            this.settings.offlineProgress = !this.settings.offlineProgress;
+            this.renderSettings();
+        });
+        DOM.toggleStaffAnimation.addEventListener('click', () => {
+            this.settings.staffTextAnimation = !this.settings.staffTextAnimation;
+            this.renderSettings();
+        });
+
         DOM.welcomeModal.closeBtn.addEventListener('click', () => DOM.welcomeModal.el.classList.add('hidden'));
         DOM.eventModal.closeBtn.addEventListener('click', () => DOM.eventModal.el.classList.add('hidden'));
         DOM.eventDetailsModal.closeBtn.addEventListener('click', () => DOM.eventDetailsModal.el.classList.add('hidden'));
