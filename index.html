@@ -130,7 +130,8 @@
     <div id="achievementsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
         <h2 class="text-2xl font-bold mb-4">Achievements</h2>
         <div id="achievementsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-        <div class="mt-8 text-center">
+        <div class="mt-8 text-center space-x-4">
+            <button id="manualSaveBtn" class="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Manual Save</button>
             <button id="resetProgressBtn" class="px-4 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Reset Progress</button>
         </div>
     </div>
@@ -199,8 +200,7 @@
         totalManualClicks: 0,
         totalLeadsGenerated: 0,
         gameStartTime: Date.now(),
-        playTime: 0,
-        eventsExperienced: new Set(),
+        playTime: 0
     };
     let eventCooldown = 180;
     let activeEvent = null;
@@ -211,8 +211,8 @@
     let hiredStaff = new Set();
     const staffButtons = {};
     const staffMembers = {
-      sales: ['Artyom', 'Alan', 'Aruna', 'Dora', 'Syrym', 'Aidos', 'Alimzhan', 'Anna', 'Bolat', 'Yerbol', 'Madi'],
-      accounts: ['Azret', 'Asiya', 'Daniil', 'Aizhan', 'Amir', 'Akzhan', 'Anuar', 'Hakim', 'Saniya', 'Sanzhar'],
+      sales: ['Artyom', 'Alan', 'Aruna', 'Dora', 'Syrym'],
+      accounts: ['Azret', 'Asiya', 'Daniil', 'Aizhan', 'Amir', 'Akzhan'],
       products: ['Emil']
     };
 
@@ -244,38 +244,7 @@
         someonePromoted: { name: "Someone is getting promoted", description: "Earn $5,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 5000 },
         syc: { name: "100% СУЦ", description: "Earn $10,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 10000 },
         buyMyUSDT: { name: "Buy my USDT", description: "Hire Emil.", unlocked: false, condition: () => hiredStaff.has('Emil') },
-        shapkaGang: { name: "Шапка gang", description: "Hire all staff.", unlocked: false, condition: () => hiredStaff.size === (staffMembers.sales.length + staffMembers.accounts.length + staffMembers.products.length) },
-        doshyrakMoney: { name: "Doshyrak Money", description: "Reach an income rate of $1.00/s.", unlocked: false, condition: () => passiveIncome >= 1 },
-        sideHustle: { name: "Side Hustle", description: "Reach an income rate of $10.00/s.", unlocked: false, condition: () => passiveIncome >= 10 },
-        theOnePercent: { name: "The 1%", description: "Reach an income rate of $100.00/s.", unlocked: false, condition: () => passiveIncome >= 100 },
-        fullPipeline: { name: "Full Pipeline", description: "Have 1,000 leads at the same time.", unlocked: false, condition: () => leads >= 1000 },
-        leadHoarder: { name: "Lead Hoarder", description: "Generate 10,000 leads in total.", unlocked: false, condition: () => gameStats.totalLeadsGenerated >= 10000 },
-        salesDivision: { name: "Sales Division", description: "Hire all staff members from the Sales category.", unlocked: false, condition: () => staffMembers.sales.every(name => hiredStaff.has(name)) },
-        accountsDepartment: { name: "Accounts Department", description: "Hire all staff members from the Accounts category.", unlocked: false, condition: () => staffMembers.accounts.every(name => hiredStaff.has(name)) },
-        middleManagement: { name: "Middle Management", description: "Have 10 total staff members hired.", unlocked: false, condition: () => hiredStaff.size >= 10 },
-        coffeeConnoisseur: { name: "Coffee Connoisseur", description: "Purchase the 'Coffee Machine' upgrade.", unlocked: false, condition: () => upgrades.coffeeMachine.purchased },
-        automationExpert: { name: "Automation Expert", description: "Purchase the 'Amir's Automation' upgrade.", unlocked: false, condition: () => upgrades.amirsAutomation.purchased },
-        technologicalAdvancement: { name: "Technological Advancement", description: "Purchase 10 different upgrades.", unlocked: false, condition: () => {
-            let count = 0;
-            for (const key in upgrades) {
-                if ((upgrades[key].level && upgrades[key].level > 0) || upgrades[key].purchased) {
-                    count++;
-                }
-            }
-            return count >= 10;
-        }},
-        maximalist: { name: "Maximalist", description: "Purchase 25 different upgrades.", unlocked: false, condition: () => {
-            let count = 0;
-            for (const key in upgrades) {
-                if ((upgrades[key].level && upgrades[key].level > 0) || upgrades[key].purchased) {
-                    count++;
-                }
-            }
-            return count >= 25;
-        }},
-        isYourWristOk: { name: "Is your wrist ok?", description: "Manually click 10,000 times.", unlocked: false, condition: () => gameStats.totalManualClicks >= 10000 },
-        notABugAFeature: { name: "It's Not a Bug, It's a Feature", description: "Experience a 'Server Crash' event.", unlocked: false, condition: () => gameStats.eventsExperienced.has('serverCrash') },
-        stonks: { name: "Stonks", description: "Experience a 'Bull Market' event.", unlocked: false, condition: () => gameStats.eventsExperienced.has('bullMarket') }
+        shapkaGang: { name: "Шапка gang", description: "Hire all staff.", unlocked: false, condition: () => hiredStaff.size === (staffMembers.sales.length + staffMembers.accounts.length + staffMembers.products.length) }
     };
 
     let salesStaffCount = 0, accountStaffCount = 0, productStaffCount = 0;
@@ -291,7 +260,7 @@
             hiredStaff: Array.from(hiredStaff),
             upgrades,
             achievements,
-            gameStats: { ...gameStats, eventsExperienced: Array.from(gameStats.eventsExperienced) },
+            gameStats,
             salesStaffCount, accountStaffCount, productStaffCount,
             lastSavedTime: Date.now(),
             activeEvent, eventCooldown
@@ -326,9 +295,6 @@
         Object.assign(upgrades, gameState.upgrades);
         Object.assign(achievements, gameState.achievements);
         Object.assign(gameStats, gameState.gameStats);
-        if (gameState.gameStats && gameState.gameStats.eventsExperienced) {
-            gameStats.eventsExperienced = new Set(gameState.gameStats.eventsExperienced);
-        }
         
         hiredStaff = new Set(gameState.hiredStaff || []);
 
@@ -488,11 +454,9 @@
         salesStaffCount++;
         salesStaffCost *= 3;
         recalculateLeadChance();
-        staffIntervals.push(setInterval(() => tryGenerateLead(false), 500));
       } else if (type === 'accounts') {
         accountStaffCount++;
         accountsStaffCost *= 3;
-        staffIntervals.push(setInterval(() => developLead(false), 500));
       } else if (type === 'products') {
         productStaffCount++;
         passiveIncome += 5;
@@ -889,7 +853,6 @@
         const eventKeys = Object.keys(events);
         const randomKey = eventKeys[Math.floor(Math.random() * eventKeys.length)];
         const event = events[randomKey];
-        gameStats.eventsExperienced.add(randomKey);
         
         let description = event.description();
         if (randomKey === 'viralMarketing' || randomKey === 'teamBurnout') {
@@ -1158,6 +1121,13 @@
         });
 
         document.getElementById('resetProgressBtn').onclick = resetGame;
+        document.getElementById('manualSaveBtn').onclick = () => {
+            saveGame();
+            const btn = document.getElementById('manualSaveBtn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Saved!';
+            setTimeout(() => { btn.textContent = originalText; }, 1500);
+        };
         document.getElementById('close-welcome-modal').onclick = () => {
             document.getElementById('welcome-back-modal').classList.add('hidden');
         };
