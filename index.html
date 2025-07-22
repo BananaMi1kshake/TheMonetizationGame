@@ -2,140 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monetization Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 0;
-      text-align: center;
+      font-family: 'Inter', sans-serif;
     }
-    .header {
-      background: #333;
-      color: white;
-      padding: 1em;
-      font-size: 1.5em;
+    /* Simple animation for the text typing */
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
     }
-    .global-stats {
-      background: #222;
-      color: #fff;
-      padding: 0.5em 1em;
-      display: flex;
-      justify-content: center;
-      gap: 2em;
-      font-size: 1.1em;
-      position: sticky;
-      top: 0;
-      z-index: 999;
+    .typing-effect {
+        overflow: hidden;
+        border-right: .15em solid orange;
+        white-space: nowrap;
+        animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
     }
     .screen {
-      display: none;
-      padding: 2em;
+        display: none;
     }
     .active {
-      display: block;
-    }
-    .button {
-      padding: 1em 2em;
-      font-size: 1em;
-      margin: 1em;
-      cursor: pointer;
-    }
-    .progress-container {
-      width: 300px;
-      margin: 1em auto;
-      background: #ddd;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .progress-bar {
-      height: 20px;
-      background: green;
-      width: 0%;
-      transition: width 0.2s;
-    }
-    .stats {
-      font-size: 1.2em;
-      margin-top: 1em;
-    }
-    #nav-buttons {
-      margin: 1em;
-    }
-    #nav-buttons button {
-      padding: 0.5em 1em;
-      font-size: 1em;
-    }
-    #emailText, #adScriptText {
-      margin-top: 1em;
-      font-family: monospace;
-      white-space: pre-wrap;
-      background: #fff;
-      padding: 1em;
-      border: 1px solid #ccc;
-      width: 80%;
-      margin-left: auto;
-      margin-right: auto;
-      max-width: 600px;
-      height: 200px;
-      overflow-y: auto;
-      text-align: left;
-    }
-    .staff-category {
-      margin-top: 2em;
-    }
-    .staff-list button {
-      margin: 0.5em;
+        display: block;
     }
   </style>
 </head>
-<body>
-  <div class="header">Monetization Simulator</div>
-  <div class="global-stats">
-    <span>Leads: <span id="globalLeadCount">0</span></span>
-    <span>Money: $<span id="globalMoneyCount">0.00</span></span>
-    <span>Rate: $<span id="globalRate">0.00</span>/s</span>
-  </div>
-  <div id="nav-buttons">
-    <button onclick="showScreen('salesScreen')">Sales</button>
-    <button onclick="showScreen('accountScreen')">Accounts</button>
-    <button onclick="showScreen('staffScreen')">Staff</button>
-  </div>
-  <div id="salesScreen" class="screen active">
-    <h2>Sales Screen</h2>
-    <button class="button" onclick="tryGenerateLead()">Generate Lead</button>
-    <div class="stats">Leads: <span id="leadCount">0</span></div>
-    <div id="emailText"></div>
-  </div>
-  <div id="accountScreen" class="screen">
-    <h2>Accounts Screen</h2>
-    <button class="button" id="developBtn" onclick="developLead()">Develop Lead</button>
-    <div class="progress-container">
-      <div id="progressBar" class="progress-bar"></div>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- Main Container -->
+  <div class="container mx-auto max-w-4xl p-4">
+
+    <!-- Header -->
+    <header class="bg-gray-800 text-white p-4 rounded-lg shadow-lg mb-4">
+      <h1 class="text-3xl font-bold text-center">Monetization Simulator</h1>
+    </header>
+
+    <!-- Global Stats Bar -->
+    <div class="bg-gray-900 text-white p-3 rounded-lg shadow-md mb-4 sticky top-2 z-50 flex justify-around items-center text-center">
+      <div>
+        <span class="text-sm text-gray-400">Leads</span>
+        <p class="text-xl font-semibold" id="globalLeadCount">0</p>
+      </div>
+      <div>
+        <span class="text-sm text-gray-400">Money</span>
+        <p class="text-xl font-semibold">$<span id="globalMoneyCount">0.00</span></p>
+      </div>
+      <div>
+        <span class="text-sm text-gray-400">Rate</span>
+        <p class="text-xl font-semibold">$<span id="globalRate">0.00</span>/s</p>
+      </div>
     </div>
-    <div class="stats">Money: $<span id="moneyCount">0.00</span></div>
-    <div id="adScriptText"></div>
+
+    <!-- Navigation Tabs -->
+    <div id="nav-buttons" class="bg-white rounded-lg shadow-md p-2 mb-4 flex flex-wrap justify-center gap-2">
+      <button onclick="showScreen('salesScreen')" class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Sales</button>
+      <button onclick="showScreen('accountScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Accounts</button>
+      <button onclick="showScreen('staffScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Staff</button>
+      <button onclick="showScreen('upgradesScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Upgrades</button>
+    </div>
+
+    <!-- Sales Screen -->
+    <div id="salesScreen" class="screen active p-4 bg-white rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold mb-4">Sales Screen</h2>
+      <button class="w-full md:w-auto px-6 py-3 rounded-lg bg-green-500 text-white font-bold text-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105" onclick="tryGenerateLead()">Generate Lead</button>
+      <div class="mt-4 text-xl">Leads: <span id="leadCount" class="font-bold">0</span></div>
+      <div id="emailText" class="mt-4 p-4 h-48 bg-gray-900 text-green-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
+    </div>
+
+    <!-- Accounts Screen -->
+    <div id="accountScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold mb-4">Accounts Screen</h2>
+      <button class="w-full md:w-auto px-6 py-3 rounded-lg bg-indigo-500 text-white font-bold text-lg shadow-md hover:bg-indigo-600 transition-transform transform hover:scale-105" id="developBtn" onclick="developLead()">Develop Lead</button>
+      <div class="w-full bg-gray-200 rounded-full h-6 mt-4 overflow-hidden shadow-inner">
+        <div id="progressBar" class="bg-indigo-600 h-6 rounded-full transition-all duration-200" style="width: 0%"></div>
+      </div>
+      <div class="mt-4 text-xl">Money: $<span id="moneyCount" class="font-bold">0.00</span></div>
+      <div id="adScriptText" class="mt-4 p-4 h-48 bg-gray-900 text-cyan-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
+    </div>
+
+    <!-- Staff Screen -->
+    <div id="staffScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold mb-4">Staff</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <h3 class="text-xl font-semibold mb-2">Hired Staff</h3>
+            <ul id="hiredStaffList" class="list-disc list-inside bg-gray-100 p-3 rounded-lg min-h-[100px]"></ul>
+        </div>
+        <div>
+            <div class="staff-category mb-4">
+              <h3 class="text-xl font-semibold mb-2">Sales</h3>
+              <div class="staff-list flex flex-wrap gap-2" id="salesStaffList"></div>
+            </div>
+            <div class="staff-category mb-4">
+              <h3 class="text-xl font-semibold mb-2">Accounts</h3>
+              <div class="staff-list flex flex-wrap gap-2" id="accountsStaffList"></div>
+            </div>
+            <div class="staff-category">
+              <h3 class="text-xl font-semibold mb-2">Products</h3>
+              <div class="staff-list flex flex-wrap gap-2" id="productsStaffList"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upgrades Screen -->
+    <div id="upgradesScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Upgrades</h2>
+        <div class="upgrade-category mb-6">
+            <h3 class="text-xl font-semibold border-b-2 border-gray-200 pb-2 mb-3">Sales Upgrades</h3>
+            <div id="salesUpgradesList" class="space-y-3"></div>
+        </div>
+        <div class="upgrade-category mb-6">
+            <h3 class="text-xl font-semibold border-b-2 border-gray-200 pb-2 mb-3">Accounts Upgrades</h3>
+            <div id="accountsUpgradesList" class="space-y-3"></div>
+        </div>
+        <div class="upgrade-category">
+            <h3 class="text-xl font-semibold border-b-2 border-gray-200 pb-2 mb-3">Global Upgrades</h3>
+            <div id="globalUpgradesList" class="space-y-3"></div>
+        </div>
+    </div>
+
   </div>
-  <div id="staffScreen" class="screen">
-    <h2>Staff</h2>
-    <div><strong>Hired Staff:</strong></div>
-    <ul id="hiredStaffList"></ul>
-    <div class="staff-category">
-      <h3>Sales</h3>
-      <div class="staff-list" id="salesStaffList"></div>
-    </div>
-    <div class="staff-category">
-      <h3>Accounts</h3>
-      <div class="staff-list" id="accountsStaffList"></div>
-    </div>
-    <div class="staff-category">
-      <h3>Products</h3>
-      <div class="staff-list" id="productsStaffList"></div>
-    </div>
-  </div>
+
   <script>
+    // --- GAME STATE VARIABLES ---
     let leads = 0, money = 0, developClicks = 0, passiveIncome = 0;
     let emailCharIndex = 0, adCharIndex = 0;
+    let leadGenerationChance = 0.01; // Base 1% chance
+    let clicksToDevelopLead = 100; // Clicks needed to convert a lead
+
+    // --- CONTENT & CONFIG ---
     const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well. I'm writing to follow up on our previous conversation regarding the exciting monetization opportunities available to you...`;
     const adScriptContent = `// Monetization Script\nfunction showAd() {\n  const ad = document.createElement('div');\n  ad.className = 'ad-banner';\n  ad.innerText = 'This space is monetized!';\n  document.body.appendChild(ad);\n}\nsetInterval(showAd, 5000);`;
     const hiredStaff = new Set();
@@ -145,20 +143,58 @@
       accounts: ['Azret', 'Asiya', 'Danil', 'Aizhan', 'Amir', 'Akzhan'],
       products: ['Emil']
     };
+
+    const upgrades = {
+      betterLeadForms: {
+        level: 0,
+        cost: 1,
+        costMultiplier: 5,
+        chanceIncrease: 0.001 // This is +0.1%
+      },
+      asiyasHelp: {
+        level: 0,
+        cost: 5,
+        costMultiplier: 5,
+        clicksReduction: 10
+      },
+      nytPuzzles: {
+          purchased: false,
+          cost: 15,
+          multiplier: 1.5
+      }
+    };
+    
     let salesStaffCount = 0, accountStaffCount = 0, productStaffCount = 0;
+
+    // --- UI & DISPLAY FUNCTIONS ---
     function updateGlobalStats() {
       document.getElementById('globalLeadCount').textContent = leads;
       document.getElementById('globalMoneyCount').textContent = money.toFixed(2);
       document.getElementById('globalRate').textContent = passiveIncome.toFixed(2);
     }
+
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
       });
       document.getElementById(id).classList.add('active');
+      
+      const navButtons = document.querySelectorAll('#nav-buttons button');
+      navButtons.forEach(btn => {
+          btn.classList.remove('bg-blue-500', 'text-white');
+          btn.classList.add('bg-gray-200', 'text-gray-700');
+      });
+      
+      const activeButton = Array.from(navButtons).find(btn => btn.getAttribute('onclick') === `showScreen('${id}')`);
+      if(activeButton) {
+          activeButton.classList.add('bg-blue-500', 'text-white');
+          activeButton.classList.remove('bg-gray-200', 'text-gray-700');
+      }
     }
+
+    // --- CORE GAME LOGIC ---
     function tryGenerateLead() {
-      if (Math.random() < 0.01) {
+      if (Math.random() < leadGenerationChance) {
         leads++;
         document.getElementById('leadCount').textContent = leads;
       }
@@ -169,11 +205,12 @@
       document.getElementById('emailText').textContent += emailContent.charAt(emailCharIndex++);
       updateGlobalStats();
     }
+
     function developLead() {
       if (leads <= 0) return;
       developClicks++;
-      document.getElementById('progressBar').style.width = (developClicks) + "%";
-      if (developClicks >= 100) {
+      document.getElementById('progressBar').style.width = (developClicks / clicksToDevelopLead * 100) + "%";
+      if (developClicks >= clicksToDevelopLead) {
         passiveIncome += 0.01;
         developClicks = 0;
         leads--;
@@ -187,11 +224,13 @@
       document.getElementById('adScriptText').textContent += adScriptContent.charAt(adCharIndex++);
       updateGlobalStats();
     }
+
     function updateMoney() {
       money += passiveIncome;
       document.getElementById('moneyCount').textContent = money.toFixed(2);
       updateGlobalStats();
     }
+
     function hireStaff(name, type, button) {
       if (hiredStaff.has(name)) return;
       let cost;
@@ -209,10 +248,14 @@
       money -= cost;
       document.getElementById('moneyCount').textContent = money.toFixed(2);
       button.disabled = true;
-      button.textContent = `Hired ${name}`;
+      button.textContent = `Hired`;
+      button.classList.add('bg-gray-400', 'cursor-not-allowed');
+      
       const li = document.createElement('li');
-      li.textContent = name + " (" + type + ")";
+      li.textContent = `${name} (${type})`;
+      li.className = 'text-gray-700';
       document.getElementById('hiredStaffList').appendChild(li);
+
       hiredStaff.add(name);
       if (type === 'sales') {
         salesStaffCount++;
@@ -226,7 +269,45 @@
       }
       updateStaffButtonPrices();
       updateGlobalStats();
+      checkUnlocks(); // Check for new unlocks after hiring
     }
+    
+    function checkUnlocks() {
+        // Unlock all other sales staff after hiring Artyom
+        if (hiredStaff.has('Artyom')) {
+            staffMembers.sales.forEach(name => {
+                if (name !== 'Artyom') {
+                    staffButtons[name].style.display = 'inline-block';
+                }
+            });
+        }
+
+        // Unlock Asiya after hiring Azret
+        if (hiredStaff.has('Azret')) {
+            staffButtons['Asiya'].style.display = 'inline-block';
+        }
+
+        // Unlock rest of accounts staff after hiring Azret and Asiya
+        if (hiredStaff.has('Azret') && hiredStaff.has('Asiya')) {
+            staffMembers.accounts.forEach(name => {
+                if (name !== 'Azret' && name !== 'Asiya') {
+                    staffButtons[name].style.display = 'inline-block';
+                }
+            });
+        }
+
+        // Unlock Emil after hiring all sales and accounts staff
+        const allSalesHired = staffMembers.sales.every(name => hiredStaff.has(name));
+        const allAccountsHired = staffMembers.accounts.every(name => hiredStaff.has(name));
+
+        if (allSalesHired && allAccountsHired && !staffButtons['Emil']) {
+            const btn = createStaffButton('Emil', 'products');
+            document.getElementById('productsStaffList').appendChild(btn);
+            updateStaffButtonPrices();
+        }
+    }
+
+
     function updateStaffButtonPrices() {
       for (const name in staffButtons) {
         if (hiredStaff.has(name)) continue;
@@ -234,42 +315,201 @@
         let type = 'products';
         if (staffMembers.sales.includes(name)) type = 'sales';
         else if (staffMembers.accounts.includes(name)) type = 'accounts';
+        
+        let currentCount = 0;
+        if (type === 'sales') currentCount = salesStaffCount;
+        else if (type === 'accounts') currentCount = accountStaffCount;
+
         const cost = type === 'sales'
-          ? Math.ceil(5 * Math.pow(1.6, salesStaffCount))
+          ? Math.ceil(5 * Math.pow(1.6, currentCount))
           : type === 'accounts'
-            ? Math.ceil(10 * Math.pow(1.6, accountStaffCount))
+            ? Math.ceil(10 * Math.pow(1.6, currentCount))
             : 100;
         btn.textContent = `Hire ${name} ($${cost})`;
       }
     }
-    function createStaffButtons() {
-      staffMembers.sales.forEach(name => {
+
+    function createStaffButton(name, type) {
         const btn = document.createElement('button');
+        btn.className = 'px-3 py-1.5 rounded-md bg-yellow-400 text-yellow-900 font-semibold hover:bg-yellow-500 text-sm';
         staffButtons[name] = btn;
-        document.getElementById('salesStaffList').appendChild(btn);
-      });
-      staffMembers.accounts.forEach(name => {
-        const btn = document.createElement('button');
-        staffButtons[name] = btn;
-        document.getElementById('accountsStaffList').appendChild(btn);
-      });
-      staffMembers.products.forEach(name => {
-        const btn = document.createElement('button');
-        staffButtons[name] = btn;
-        document.getElementById('productsStaffList').appendChild(btn);
-      });
-      updateStaffButtonPrices();
-      for (const name in staffButtons) {
-        const btn = staffButtons[name];
-        let type = 'products';
-        if (staffMembers.sales.includes(name)) type = 'sales';
-        else if (staffMembers.accounts.includes(name)) type = 'accounts';
         btn.onclick = () => hireStaff(name, type, btn);
+        return btn;
+    }
+
+    function createInitialStaffButtons() {
+        // Create all buttons but hide most of them initially
+        staffMembers.sales.forEach(name => {
+            const btn = createStaffButton(name, 'sales');
+            if (name !== 'Artyom') btn.style.display = 'none';
+            document.getElementById('salesStaffList').appendChild(btn);
+        });
+
+        staffMembers.accounts.forEach(name => {
+            const btn = createStaffButton(name, 'accounts');
+            if (name !== 'Azret') btn.style.display = 'none';
+            document.getElementById('accountsStaffList').appendChild(btn);
+        });
+
+        updateStaffButtonPrices();
+    }
+
+    // --- UPGRADE LOGIC ---
+    function buyBetterLeadForms() {
+      const upgrade = upgrades.betterLeadForms;
+      if (money >= upgrade.cost) {
+        money -= upgrade.cost;
+        upgrade.level++;
+        upgrade.cost *= upgrade.costMultiplier;
+        leadGenerationChance += upgrade.chanceIncrease;
+        
+        renderSalesUpgrades();
+        updateGlobalStats();
+      } else {
+        alert("Not enough money for this upgrade!");
       }
     }
-    createStaffButtons();
-    setInterval(updateMoney, 1000);
-    updateGlobalStats();
+    
+    function buyAsiyasHelp() {
+        const upgrade = upgrades.asiyasHelp;
+        if (money >= upgrade.cost) {
+            if (clicksToDevelopLead <= 10) {
+                alert("Development time cannot be reduced further!");
+                return;
+            }
+            money -= upgrade.cost;
+            upgrade.level++;
+            upgrade.cost *= upgrade.costMultiplier;
+            clicksToDevelopLead -= upgrade.clicksReduction;
+            if (clicksToDevelopLead < 10) clicksToDevelopLead = 10; // Cap at 10
+
+            renderAccountsUpgrades();
+            updateGlobalStats();
+        } else {
+            alert("Not enough money for this upgrade!");
+        }
+    }
+
+    function buyNytPuzzles() {
+        const upgrade = upgrades.nytPuzzles;
+        if (upgrade.purchased) return;
+        if (money >= upgrade.cost) {
+            money -= upgrade.cost;
+            upgrade.purchased = true;
+
+            // Apply multiplier to other upgrades
+            upgrades.betterLeadForms.chanceIncrease *= upgrade.multiplier;
+            upgrades.asiyasHelp.clicksReduction = Math.round(upgrades.asiyasHelp.clicksReduction * upgrade.multiplier);
+
+            // Re-render all upgrade sections to reflect boosted values
+            renderSalesUpgrades();
+            renderAccountsUpgrades();
+            renderGlobalUpgrades();
+            updateGlobalStats();
+        } else {
+            alert("Not enough money for this upgrade!");
+        }
+    }
+
+    function renderSalesUpgrades() {
+      const container = document.getElementById('salesUpgradesList');
+      const upgrade = upgrades.betterLeadForms;
+      container.innerHTML = ''; 
+
+      const item = document.createElement('div');
+      item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
+
+      const currentChance = (leadGenerationChance * 100).toFixed(2);
+      const increasePerLevel = (upgrade.chanceIncrease * 100).toFixed(2);
+
+      item.innerHTML = `
+        <div>
+          <h4 class="font-bold text-lg">Better Lead Forms <span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${upgrade.level}</span></h4>
+          <p class="text-sm text-gray-600">Increases manual lead generation chance by ${increasePerLevel}pp.</p>
+          <p class="text-sm text-gray-600">Current total chance: ${currentChance}%</p>
+        </div>
+        <div class="text-right">
+          <button class="px-4 py-2 rounded-md bg-green-500 text-white font-semibold hover:bg-green-600">Buy</button>
+          <p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p>
+        </div>
+      `;
+      item.querySelector('button').onclick = buyBetterLeadForms;
+      container.appendChild(item);
+    }
+
+    function renderAccountsUpgrades() {
+        const container = document.getElementById('accountsUpgradesList');
+        const upgrade = upgrades.asiyasHelp;
+        container.innerHTML = '';
+
+        const item = document.createElement('div');
+        item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
+
+        item.innerHTML = `
+            <div>
+              <h4 class="font-bold text-lg">Asiya’s Help <span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${upgrade.level}</span></h4>
+              <p class="text-sm text-gray-600">Reduces clicks needed to develop a lead by ${upgrade.clicksReduction}.</p>
+              <p class="text-sm text-gray-600">Current clicks needed: ${clicksToDevelopLead}</p>
+            </div>
+            <div class="text-right">
+              <button class="px-4 py-2 rounded-md bg-indigo-500 text-white font-semibold hover:bg-indigo-600">Buy</button>
+              <p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p>
+            </div>
+          `;
+        const button = item.querySelector('button');
+        button.onclick = buyAsiyasHelp;
+        if (clicksToDevelopLead <= 10) {
+            button.disabled = true;
+            button.textContent = 'Maxed';
+            button.classList.add('bg-gray-400', 'cursor-not-allowed');
+            button.classList.remove('bg-indigo-500', 'hover:bg-indigo-600');
+        }
+        container.appendChild(item);
+    }
+    
+    function renderGlobalUpgrades() {
+        const container = document.getElementById('globalUpgradesList');
+        const upgrade = upgrades.nytPuzzles;
+        container.innerHTML = '';
+
+        const item = document.createElement('div');
+        item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
+
+        item.innerHTML = `
+            <div>
+              <h4 class="font-bold text-lg">NYT Puzzles</h4>
+              <p class="text-sm text-gray-600">Boosts the effectiveness of all Sales and Account upgrades by x${upgrade.multiplier}.</p>
+              <p class="text-sm text-gray-600">One-time purchase.</p>
+            </div>
+            <div class="text-right">
+              <button class="px-4 py-2 rounded-md bg-purple-500 text-white font-semibold hover:bg-purple-600">Buy</button>
+              <p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p>
+            </div>
+        `;
+
+        const button = item.querySelector('button');
+        button.onclick = buyNytPuzzles;
+        if (upgrade.purchased) {
+            button.disabled = true;
+            button.textContent = 'Purchased';
+            button.classList.add('bg-gray-400', 'cursor-not-allowed');
+            button.classList.remove('bg-purple-500', 'hover:bg-purple-600');
+        }
+        container.appendChild(item);
+    }
+
+    // --- INITIALIZE GAME ---
+    function initialize() {
+        createInitialStaffButtons();
+        renderSalesUpgrades();
+        renderAccountsUpgrades();
+        renderGlobalUpgrades();
+        setInterval(updateMoney, 1000);
+        updateGlobalStats();
+    }
+
+    // Run the game
+    window.onload = initialize;
   </script>
 </body>
 </html>
