@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Monetization Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .header {
+      background: #333;
+      color: white;
+      padding: 1em;
+      font-size: 1.5em;
+    }
+    .global-stats {
+      background: #222;
+      color: #fff;
+      padding: 0.5em 1em;
+      display: flex;
+      justify-content: center;
+      gap: 2em;
+      font-size: 1.1em;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+    .screen {
+      display: none;
+      padding: 2em;
+    }
+    .active {
+      display: block;
+    }
+    .button {
+      padding: 1em 2em;
+      font-size: 1em;
+      margin: 1em;
+      cursor: pointer;
+    }
+    .progress-container {
+      width: 300px;
+      margin: 1em auto;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 20px;
+      background: green;
+      width: 0%;
+      transition: width 0.2s;
+    }
+    .stats {
+      font-size: 1.2em;
+      margin-top: 1em;
+    }
+    #nav-buttons {
+      margin: 1em;
+    }
+    #nav-buttons button {
+      padding: 0.5em 1em;
+      font-size: 1em;
+    }
+    #emailText, #adScriptText {
+      margin-top: 1em;
+      font-family: monospace;
+      white-space: pre-wrap;
+      background: #fff;
+      padding: 1em;
+      border: 1px solid #ccc;
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 600px;
+      height: 200px;
+      overflow-y: auto;
+      text-align: left;
+    }
+    .staff-category {
+      margin-top: 2em;
+    }
+    .staff-list button {
+      margin: 0.5em;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Monetization Simulator</div>
+  <div class="global-stats">
+    <span>Leads: <span id="globalLeadCount">0</span></span>
+    <span>Money: $<span id="globalMoneyCount">0.00</span></span>
+    <span>Rate: $<span id="globalRate">0.00</span>/s</span>
+  </div>
+  <div id="nav-buttons">
+    <button onclick="showScreen('salesScreen')">Sales</button>
+    <button onclick="showScreen('accountScreen')">Accounts</button>
+    <button onclick="showScreen('staffScreen')">Staff</button>
+  </div>
+  <div id="salesScreen" class="screen active">
+    <h2>Sales Screen</h2>
+    <button class="button" onclick="tryGenerateLead()">Generate Lead</button>
+    <div class="stats">Leads: <span id="leadCount">0</span></div>
+    <div id="emailText"></div>
+  </div>
+  <div id="accountScreen" class="screen">
+    <h2>Accounts Screen</h2>
+    <button class="button" id="developBtn" onclick="developLead()">Develop Lead</button>
+    <div class="progress-container">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+    <div class="stats">Money: $<span id="moneyCount">0.00</span></div>
+    <div id="adScriptText"></div>
+  </div>
+  <div id="staffScreen" class="screen">
+    <h2>Staff</h2>
+    <div><strong>Hired Staff:</strong></div>
+    <ul id="hiredStaffList"></ul>
+    <div class="staff-category">
+      <h3>Sales</h3>
+      <div class="staff-list" id="salesStaffList"></div>
+    </div>
+    <div class="staff-category">
+      <h3>Accounts</h3>
+      <div class="staff-list" id="accountsStaffList"></div>
+    </div>
+    <div class="staff-category">
+      <h3>Products</h3>
+      <div class="staff-list" id="productsStaffList"></div>
+    </div>
+  </div>
+  <script>
+    let leads = 0, money = 0, developClicks = 0, passiveIncome = 0;
+    let emailCharIndex = 0, adCharIndex = 0;
+    const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well. I'm writing to follow up on our previous conversation regarding the exciting monetization opportunities available to you...`;
+    const adScriptContent = `// Monetization Script\nfunction showAd() {\n  const ad = document.createElement('div');\n  ad.className = 'ad-banner';\n  ad.innerText = 'This space is monetized!';\n  document.body.appendChild(ad);\n}\nsetInterval(showAd, 5000);`;
+    const hiredStaff = new Set();
+    const staffButtons = {};
+    const staffMembers = {
+      sales: ['Artyom', 'Alan', 'Aruna', 'Dora', 'Syrym'],
+      accounts: ['Azret', 'Asiya', 'Danil', 'Aizhan', 'Amir', 'Akzhan'],
+      products: ['Emil']
+    };
+    let salesStaffCount = 0, accountStaffCount = 0, productStaffCount = 0;
+    function updateGlobalStats() {
+      document.getElementById('globalLeadCount').textContent = leads;
+      document.getElementById('globalMoneyCount').textContent = money.toFixed(2);
+      document.getElementById('globalRate').textContent = passiveIncome.toFixed(2);
+    }
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      document.getElementById(id).classList.add('active');
+    }
+    function tryGenerateLead() {
+      if (Math.random() < 0.01) {
+        leads++;
+        document.getElementById('leadCount').textContent = leads;
+      }
+      if (emailCharIndex >= emailContent.length) {
+        emailCharIndex = 0;
+        document.getElementById('emailText').textContent = '';
+      }
+      document.getElementById('emailText').textContent += emailContent.charAt(emailCharIndex++);
+      updateGlobalStats();
+    }
+    function developLead() {
+      if (leads <= 0) return;
+      developClicks++;
+      document.getElementById('progressBar').style.width = (developClicks) + "%";
+      if (developClicks >= 100) {
+        passiveIncome += 0.01;
+        developClicks = 0;
+        leads--;
+        document.getElementById('leadCount').textContent = leads;
+        document.getElementById('progressBar').style.width = "0%";
+      }
+      if (adCharIndex >= adScriptContent.length) {
+        adCharIndex = 0;
+        document.getElementById('adScriptText').textContent = '';
+      }
+      document.getElementById('adScriptText').textContent += adScriptContent.charAt(adCharIndex++);
+      updateGlobalStats();
+    }
+    function updateMoney() {
+      money += passiveIncome;
+      document.getElementById('moneyCount').textContent = money.toFixed(2);
+      updateGlobalStats();
+    }
+    function hireStaff(name, type, button) {
+      if (hiredStaff.has(name)) return;
+      let cost;
+      if (type === 'sales') {
+        cost = Math.ceil(5 * Math.pow(1.6, salesStaffCount));
+      } else if (type === 'accounts') {
+        cost = Math.ceil(10 * Math.pow(1.6, accountStaffCount));
+      } else if (type === 'products') {
+        cost = 100;
+      }
+      if (money < cost) {
+        alert("Not enough money to hire " + name);
+        return;
+      }
+      money -= cost;
+      document.getElementById('moneyCount').textContent = money.toFixed(2);
+      button.disabled = true;
+      button.textContent = `Hired ${name}`;
+      const li = document.createElement('li');
+      li.textContent = name + " (" + type + ")";
+      document.getElementById('hiredStaffList').appendChild(li);
+      hiredStaff.add(name);
+      if (type === 'sales') {
+        salesStaffCount++;
+        setInterval(tryGenerateLead, 500);
+      } else if (type === 'accounts') {
+        accountStaffCount++;
+        setInterval(developLead, 500);
+      } else if (type === 'products') {
+        productStaffCount++;
+        passiveIncome += 5;
+      }
+      updateStaffButtonPrices();
+      updateGlobalStats();
+    }
+    function updateStaffButtonPrices() {
+      for (const name in staffButtons) {
+        if (hiredStaff.has(name)) continue;
+        const btn = staffButtons[name];
+        let type = 'products';
+        if (staffMembers.sales.includes(name)) type = 'sales';
+        else if (staffMembers.accounts.includes(name)) type = 'accounts';
+        const cost = type === 'sales'
+          ? Math.ceil(5 * Math.pow(1.6, salesStaffCount))
+          : type === 'accounts'
+            ? Math.ceil(10 * Math.pow(1.6, accountStaffCount))
+            : 100;
+        btn.textContent = `Hire ${name} ($${cost})`;
+      }
+    }
+    function createStaffButtons() {
+      staffMembers.sales.forEach(name => {
+        const btn = document.createElement('button');
+        staffButtons[name] = btn;
+        document.getElementById('salesStaffList').appendChild(btn);
+      });
+      staffMembers.accounts.forEach(name => {
+        const btn = document.createElement('button');
+        staffButtons[name] = btn;
+        document.getElementById('accountsStaffList').appendChild(btn);
+      });
+      staffMembers.products.forEach(name => {
+        const btn = document.createElement('button');
+        staffButtons[name] = btn;
+        document.getElementById('productsStaffList').appendChild(btn);
+      });
+      updateStaffButtonPrices();
+      for (const name in staffButtons) {
+        const btn = staffButtons[name];
+        let type = 'products';
+        if (staffMembers.sales.includes(name)) type = 'sales';
+        else if (staffMembers.accounts.includes(name)) type = 'accounts';
+        btn.onclick = () => hireStaff(name, type, btn);
+      }
+    }
+    createStaffButtons();
+    setInterval(updateMoney, 1000);
+    updateGlobalStats();
+  </script>
+</body>
+</html>
