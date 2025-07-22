@@ -10,22 +10,14 @@
     body {
       font-family: 'Inter', sans-serif;
     }
-    /* Simple animation for the text typing */
-    @keyframes typing {
-      from { width: 0 }
-      to { width: 100% }
-    }
-    .typing-effect {
-        overflow: hidden;
-        border-right: .15em solid orange;
-        white-space: nowrap;
-        animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
-    }
     .screen {
         display: none;
     }
     .active {
         display: block;
+    }
+    #achievement-popup {
+        transition: opacity 0.5s, transform 0.5s;
     }
   </style>
 </head>
@@ -61,6 +53,7 @@
       <button onclick="showScreen('accountScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Accounts</button>
       <button onclick="showScreen('staffScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Staff</button>
       <button onclick="showScreen('upgradesScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Upgrades</button>
+      <button onclick="showScreen('achievementsScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Achievements</button>
     </div>
 
     <!-- Sales Screen -->
@@ -123,12 +116,27 @@
             <div id="globalUpgradesList" class="space-y-3"></div>
         </div>
     </div>
+    
+    <!-- Achievements Screen -->
+    <div id="achievementsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Achievements</h2>
+        <div id="achievementsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Achievements will be rendered here -->
+        </div>
+    </div>
 
   </div>
+  
+  <!-- Achievement Popup -->
+  <div id="achievement-popup" class="fixed bottom-5 right-5 bg-gray-900 text-white p-4 rounded-lg shadow-2xl opacity-0 transform translate-y-10 pointer-events-none">
+      <h3 class="font-bold text-lg text-yellow-400" id="achievement-title"></h3>
+      <p class="text-sm" id="achievement-desc"></p>
+  </div>
+
 
   <script>
     // --- GAME STATE VARIABLES ---
-    let leads = 0, money = 0, developClicks = 0, passiveIncome = 0;
+    let leads = 0, money = 0, developClicks = 0, passiveIncome = 0, totalMoneyEarned = 0;
     let emailCharIndex = 0, adCharIndex = 0;
     let leadGenerationChance = 0.01; // Base 1% chance
     let clicksToDevelopLead = 100; // Clicks needed to convert a lead
@@ -145,25 +153,21 @@
     };
 
     const upgrades = {
-      betterLeadForms: {
-        level: 0,
-        cost: 1,
-        costMultiplier: 5,
-        chanceIncrease: 0.001 // This is +0.1%
-      },
-      asiyasHelp: {
-        level: 0,
-        cost: 5,
-        costMultiplier: 5,
-        clicksReduction: 10
-      },
-      nytPuzzles: {
-          purchased: false,
-          cost: 15,
-          multiplier: 1.5
-      }
+      betterLeadForms: { level: 0, cost: 1, costMultiplier: 5, chanceIncrease: 0.001 },
+      asiyasHelp: { level: 0, cost: 5, costMultiplier: 5, clicksReduction: 10 },
+      nytPuzzles: { purchased: false, cost: 15, multiplier: 1.5 }
     };
     
+    const achievements = {
+        mukhtarSatisfied: { name: "Mukhtar is satisfied", description: "Earn $50 total.", unlocked: false, condition: () => totalMoneyEarned >= 50 },
+        mukhtarHappy: { name: "Mukhtar is happy", description: "Earn $100 total.", unlocked: false, condition: () => totalMoneyEarned >= 100 },
+        mukhtarReallyHappy: { name: "Mukhtar is REALLY happy", description: "Earn $1,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 1000 },
+        someonePromoted: { name: "Someone is getting promoted", description: "Earn $5,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 5000 },
+        syc: { name: "100% СУЦ", description: "Earn $10,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 10000 },
+        buyMyUSDT: { name: "Buy my USDT", description: "Hire Emil.", unlocked: false, condition: () => hiredStaff.has('Emil') },
+        shapkaGang: { name: "Шапка gang", description: "Hire all staff.", unlocked: false, condition: () => hiredStaff.size === (staffMembers.sales.length + staffMembers.accounts.length + staffMembers.products.length) }
+    };
+
     let salesStaffCount = 0, accountStaffCount = 0, productStaffCount = 0;
 
     // --- UI & DISPLAY FUNCTIONS ---
@@ -174,9 +178,7 @@
     }
 
     function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-      });
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       
       const navButtons = document.querySelectorAll('#nav-buttons button');
@@ -226,27 +228,26 @@
     }
 
     function updateMoney() {
-      money += passiveIncome;
+      const incomeThisTick = passiveIncome;
+      money += incomeThisTick;
+      totalMoneyEarned += incomeThisTick;
       document.getElementById('moneyCount').textContent = money.toFixed(2);
       updateGlobalStats();
+      checkAchievements();
     }
 
     function hireStaff(name, type, button) {
       if (hiredStaff.has(name)) return;
       let cost;
-      if (type === 'sales') {
-        cost = Math.ceil(5 * Math.pow(1.6, salesStaffCount));
-      } else if (type === 'accounts') {
-        cost = Math.ceil(10 * Math.pow(1.6, accountStaffCount));
-      } else if (type === 'products') {
-        cost = 100;
-      }
+      if (type === 'sales') cost = Math.ceil(5 * Math.pow(1.6, salesStaffCount));
+      else if (type === 'accounts') cost = Math.ceil(10 * Math.pow(1.6, accountStaffCount));
+      else if (type === 'products') cost = 100;
+
       if (money < cost) {
         alert("Not enough money to hire " + name);
         return;
       }
       money -= cost;
-      document.getElementById('moneyCount').textContent = money.toFixed(2);
       button.disabled = true;
       button.textContent = `Hired`;
       button.classList.add('bg-gray-400', 'cursor-not-allowed');
@@ -269,62 +270,50 @@
       }
       updateStaffButtonPrices();
       updateGlobalStats();
-      checkUnlocks(); // Check for new unlocks after hiring
+      checkUnlocks();
+      checkAchievements();
     }
     
     function checkUnlocks() {
-        // Unlock all other sales staff after hiring Artyom
         if (hiredStaff.has('Artyom')) {
             staffMembers.sales.forEach(name => {
-                if (name !== 'Artyom') {
-                    staffButtons[name].style.display = 'inline-block';
-                }
+                if (name !== 'Artyom' && staffButtons[name]) staffButtons[name].style.display = 'inline-block';
             });
         }
-
-        // Unlock Asiya after hiring Azret
         if (hiredStaff.has('Azret')) {
-            staffButtons['Asiya'].style.display = 'inline-block';
+            if(staffButtons['Asiya']) staffButtons['Asiya'].style.display = 'inline-block';
         }
-
-        // Unlock rest of accounts staff after hiring Azret and Asiya
         if (hiredStaff.has('Azret') && hiredStaff.has('Asiya')) {
             staffMembers.accounts.forEach(name => {
-                if (name !== 'Azret' && name !== 'Asiya') {
-                    staffButtons[name].style.display = 'inline-block';
-                }
+                if (name !== 'Azret' && name !== 'Asiya' && staffButtons[name]) staffButtons[name].style.display = 'inline-block';
             });
         }
-
-        // Unlock Emil after hiring all sales and accounts staff
         const allSalesHired = staffMembers.sales.every(name => hiredStaff.has(name));
         const allAccountsHired = staffMembers.accounts.every(name => hiredStaff.has(name));
-
-        if (allSalesHired && allAccountsHired && !staffButtons['Emil']) {
+        if (allSalesHired && allAccountsHired && !hiredStaff.has('Emil') && !staffButtons['Emil']) {
             const btn = createStaffButton('Emil', 'products');
             document.getElementById('productsStaffList').appendChild(btn);
             updateStaffButtonPrices();
         }
     }
 
-
     function updateStaffButtonPrices() {
       for (const name in staffButtons) {
         if (hiredStaff.has(name)) continue;
         const btn = staffButtons[name];
         let type = 'products';
-        if (staffMembers.sales.includes(name)) type = 'sales';
-        else if (staffMembers.accounts.includes(name)) type = 'accounts';
-        
         let currentCount = 0;
-        if (type === 'sales') currentCount = salesStaffCount;
-        else if (type === 'accounts') currentCount = accountStaffCount;
+        if (staffMembers.sales.includes(name)) {
+            type = 'sales';
+            currentCount = salesStaffCount;
+        } else if (staffMembers.accounts.includes(name)) {
+            type = 'accounts';
+            currentCount = accountStaffCount;
+        }
 
-        const cost = type === 'sales'
-          ? Math.ceil(5 * Math.pow(1.6, currentCount))
-          : type === 'accounts'
-            ? Math.ceil(10 * Math.pow(1.6, currentCount))
-            : 100;
+        const cost = type === 'sales' ? Math.ceil(5 * Math.pow(1.6, currentCount))
+          : type === 'accounts' ? Math.ceil(10 * Math.pow(1.6, currentCount))
+          : 100;
         btn.textContent = `Hire ${name} ($${cost})`;
       }
     }
@@ -338,19 +327,16 @@
     }
 
     function createInitialStaffButtons() {
-        // Create all buttons but hide most of them initially
         staffMembers.sales.forEach(name => {
             const btn = createStaffButton(name, 'sales');
             if (name !== 'Artyom') btn.style.display = 'none';
             document.getElementById('salesStaffList').appendChild(btn);
         });
-
         staffMembers.accounts.forEach(name => {
             const btn = createStaffButton(name, 'accounts');
             if (name !== 'Azret') btn.style.display = 'none';
             document.getElementById('accountsStaffList').appendChild(btn);
         });
-
         updateStaffButtonPrices();
     }
 
@@ -362,32 +348,23 @@
         upgrade.level++;
         upgrade.cost *= upgrade.costMultiplier;
         leadGenerationChance += upgrade.chanceIncrease;
-        
         renderSalesUpgrades();
         updateGlobalStats();
-      } else {
-        alert("Not enough money for this upgrade!");
-      }
+      } else { alert("Not enough money!"); }
     }
     
     function buyAsiyasHelp() {
         const upgrade = upgrades.asiyasHelp;
         if (money >= upgrade.cost) {
-            if (clicksToDevelopLead <= 10) {
-                alert("Development time cannot be reduced further!");
-                return;
-            }
+            if (clicksToDevelopLead <= 10) { alert("Maxed out!"); return; }
             money -= upgrade.cost;
             upgrade.level++;
             upgrade.cost *= upgrade.costMultiplier;
             clicksToDevelopLead -= upgrade.clicksReduction;
-            if (clicksToDevelopLead < 10) clicksToDevelopLead = 10; // Cap at 10
-
+            if (clicksToDevelopLead < 10) clicksToDevelopLead = 10;
             renderAccountsUpgrades();
             updateGlobalStats();
-        } else {
-            alert("Not enough money for this upgrade!");
-        }
+        } else { alert("Not enough money!"); }
     }
 
     function buyNytPuzzles() {
@@ -396,43 +373,75 @@
         if (money >= upgrade.cost) {
             money -= upgrade.cost;
             upgrade.purchased = true;
-
-            // Apply multiplier to other upgrades
             upgrades.betterLeadForms.chanceIncrease *= upgrade.multiplier;
             upgrades.asiyasHelp.clicksReduction = Math.round(upgrades.asiyasHelp.clicksReduction * upgrade.multiplier);
-
-            // Re-render all upgrade sections to reflect boosted values
             renderSalesUpgrades();
             renderAccountsUpgrades();
             renderGlobalUpgrades();
             updateGlobalStats();
-        } else {
-            alert("Not enough money for this upgrade!");
+        } else { alert("Not enough money!"); }
+    }
+    
+    // --- ACHIEVEMENT LOGIC ---
+    function checkAchievements() {
+        for (const key in achievements) {
+            const ach = achievements[key];
+            if (!ach.unlocked && ach.condition()) {
+                ach.unlocked = true;
+                showAchievementPopup(ach);
+                renderAchievements();
+            }
         }
     }
 
+    function showAchievementPopup(achievement) {
+        const popup = document.getElementById('achievement-popup');
+        document.getElementById('achievement-title').textContent = achievement.name;
+        document.getElementById('achievement-desc').textContent = achievement.description;
+        
+        popup.classList.remove('opacity-0', 'translate-y-10');
+        popup.classList.add('opacity-100', 'translate-y-0');
+
+        setTimeout(() => {
+            popup.classList.remove('opacity-100', 'translate-y-0');
+            popup.classList.add('opacity-0', 'translate-y-10');
+        }, 4000);
+    }
+
+    function renderAchievements() {
+        const container = document.getElementById('achievementsList');
+        container.innerHTML = '';
+        for (const key in achievements) {
+            const ach = achievements[key];
+            const item = document.createElement('div');
+            item.className = 'p-4 rounded-lg shadow-sm';
+            if (ach.unlocked) {
+                item.classList.add('bg-yellow-100', 'border', 'border-yellow-400');
+                item.innerHTML = `
+                    <h4 class="font-bold text-yellow-800">${ach.name}</h4>
+                    <p class="text-sm text-yellow-700">${ach.description}</p>
+                `;
+            } else {
+                item.classList.add('bg-gray-200');
+                item.innerHTML = `
+                    <h4 class="font-bold text-gray-500">Locked Achievement</h4>
+                    <p class="text-sm text-gray-400">???</p>
+                `;
+            }
+            container.appendChild(item);
+        }
+    }
+
+    // --- RENDER UPGRADES ---
     function renderSalesUpgrades() {
       const container = document.getElementById('salesUpgradesList');
       const upgrade = upgrades.betterLeadForms;
       container.innerHTML = ''; 
-
       const item = document.createElement('div');
       item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
-
       const currentChance = (leadGenerationChance * 100).toFixed(2);
       const increasePerLevel = (upgrade.chanceIncrease * 100).toFixed(2);
-
-      item.innerHTML = `
-        <div>
-          <h4 class="font-bold text-lg">Better Lead Forms <span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${upgrade.level}</span></h4>
-          <p class="text-sm text-gray-600">Increases manual lead generation chance by ${increasePerLevel}pp.</p>
-          <p class="text-sm text-gray-600">Current total chance: ${currentChance}%</p>
-        </div>
-        <div class="text-right">
-          <button class="px-4 py-2 rounded-md bg-green-500 text-white font-semibold hover:bg-green-600">Buy</button>
-          <p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p>
-        </div>
-      `;
+      item.innerHTML = `<div><h4 class="font-bold text-lg">Better Lead Forms <span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${upgrade.level}</span></h4><p class="text-sm text-gray-600">Increases manual lead generation chance by ${increasePerLevel}pp.</p><p class="text-sm text-gray-600">Current total chance: ${currentChance}%</p></div><div class="text-right"><button class="px-4 py-2 rounded-md bg-green-500 text-white font-semibold hover:bg-green-600">Buy</button><p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p></div>`;
       item.querySelector('button').onclick = buyBetterLeadForms;
       container.appendChild(item);
     }
@@ -441,21 +450,9 @@
         const container = document.getElementById('accountsUpgradesList');
         const upgrade = upgrades.asiyasHelp;
         container.innerHTML = '';
-
         const item = document.createElement('div');
         item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
-
-        item.innerHTML = `
-            <div>
-              <h4 class="font-bold text-lg">Asiya’s Help <span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${upgrade.level}</span></h4>
-              <p class="text-sm text-gray-600">Reduces clicks needed to develop a lead by ${upgrade.clicksReduction}.</p>
-              <p class="text-sm text-gray-600">Current clicks needed: ${clicksToDevelopLead}</p>
-            </div>
-            <div class="text-right">
-              <button class="px-4 py-2 rounded-md bg-indigo-500 text-white font-semibold hover:bg-indigo-600">Buy</button>
-              <p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p>
-            </div>
-          `;
+        item.innerHTML = `<div><h4 class="font-bold text-lg">Asiya’s Help <span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${upgrade.level}</span></h4><p class="text-sm text-gray-600">Reduces clicks needed to develop a lead by ${upgrade.clicksReduction}.</p><p class="text-sm text-gray-600">Current clicks needed: ${clicksToDevelopLead}</p></div><div class="text-right"><button class="px-4 py-2 rounded-md bg-indigo-500 text-white font-semibold hover:bg-indigo-600">Buy</button><p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p></div>`;
         const button = item.querySelector('button');
         button.onclick = buyAsiyasHelp;
         if (clicksToDevelopLead <= 10) {
@@ -471,22 +468,9 @@
         const container = document.getElementById('globalUpgradesList');
         const upgrade = upgrades.nytPuzzles;
         container.innerHTML = '';
-
         const item = document.createElement('div');
         item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
-
-        item.innerHTML = `
-            <div>
-              <h4 class="font-bold text-lg">NYT Puzzles</h4>
-              <p class="text-sm text-gray-600">Boosts the effectiveness of all Sales and Account upgrades by x${upgrade.multiplier}.</p>
-              <p class="text-sm text-gray-600">One-time purchase.</p>
-            </div>
-            <div class="text-right">
-              <button class="px-4 py-2 rounded-md bg-purple-500 text-white font-semibold hover:bg-purple-600">Buy</button>
-              <p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p>
-            </div>
-        `;
-
+        item.innerHTML = `<div><h4 class="font-bold text-lg">NYT Puzzles</h4><p class="text-sm text-gray-600">Boosts the effectiveness of all Sales and Account upgrades by x${upgrade.multiplier}.</p><p class="text-sm text-gray-600">One-time purchase.</p></div><div class="text-right"><button class="px-4 py-2 rounded-md bg-purple-500 text-white font-semibold hover:bg-purple-600">Buy</button><p class="text-sm font-semibold mt-1">Cost: $${upgrade.cost.toFixed(2)}</p></div>`;
         const button = item.querySelector('button');
         button.onclick = buyNytPuzzles;
         if (upgrade.purchased) {
@@ -504,6 +488,7 @@
         renderSalesUpgrades();
         renderAccountsUpgrades();
         renderGlobalUpgrades();
+        renderAchievements();
         setInterval(updateMoney, 1000);
         updateGlobalStats();
     }
