@@ -1,157 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Monetization Simulator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none; /* Prevents text selection on the whole page */
-      -webkit-user-select: none; /* For Safari */
-    }
-    .screen { display: none; }
-    .active { display: block; }
-    #achievement-popup, #welcome-back-modal, #event-modal, #event-details-modal {
-        transition: opacity 0.5s, transform 0.5s;
-    }
-    .feedback-popup {
-        position: absolute;
-        pointer-events: none;
-        animation: fade-out-up 1s forwards;
-    }
-    @keyframes fade-out-up {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-30px); }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monetization Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .screen { display: none; }
+        .active { display: block; }
+        .modal, #achievement-popup {
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .feedback-popup {
+            position: absolute;
+            pointer-events: none;
+            animation: fade-out-up 1s forwards;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        @keyframes fade-out-up {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-30px); }
+        }
+        /* Style for disabled buttons */
+        button:disabled {
+            cursor: not-allowed;
+            filter: grayscale(80%);
+        }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-  <!-- Main Container -->
-  <div class="container mx-auto max-w-4xl p-4 relative">
+    <div class="container mx-auto max-w-4xl p-4 relative">
 
-    <!-- Header -->
-    <header class="bg-gray-800 text-white p-4 rounded-lg shadow-lg mb-4">
-      <h1 class="text-3xl font-bold text-center">Monetization Simulator</h1>
-    </header>
+        <header class="bg-gray-800 text-white p-4 rounded-lg shadow-lg mb-4">
+            <h1 class="text-3xl font-bold text-center">Monetization Simulator</h1>
+        </header>
 
-    <!-- Global Stats Bar -->
-    <div class="bg-gray-900 text-white p-3 rounded-lg shadow-md mb-4 sticky top-2 z-50 flex justify-around items-center text-center">
-      <div>
-        <span class="text-sm text-gray-400">Leads</span>
-        <p class="text-xl font-semibold" id="globalLeadCount">0</p>
-      </div>
-      <div>
-        <span class="text-sm text-gray-400">Money</span>
-        <p class="text-xl font-semibold">$<span id="globalMoneyCount">0.00</span></p>
-      </div>
-      <div>
-        <span class="text-sm text-gray-400">Rate</span>
-        <p class="text-xl font-semibold">$<span id="globalRate">0.00</span>/s</p>
-      </div>
-    </div>
-
-    <!-- Navigation Tabs -->
-    <div id="nav-buttons" class="bg-white rounded-lg shadow-md p-2 mb-4 flex flex-wrap justify-center gap-2">
-      <button onclick="showScreen('salesScreen')" class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Sales</button>
-      <button onclick="showScreen('accountScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Accounts</button>
-      <button onclick="showScreen('staffScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Staff</button>
-      <button onclick="showScreen('upgradesScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Upgrades</button>
-      <button onclick="showScreen('achievementsScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Achievements</button>
-      <button onclick="showScreen('statsScreen')" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Statistics</button>
-    </div>
-
-    <!-- Sales Screen -->
-    <div id="salesScreen" class="screen active p-4 bg-white rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold mb-4">Sales Screen</h2>
-      <button id="generateLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-green-500 text-white font-bold text-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105" onclick="tryGenerateLead()">Generate Lead</button>
-      <div class="mt-4 text-xl">Leads: <span id="leadCount" class="font-bold">0</span></div>
-      <div id="emailText" class="mt-4 p-4 h-48 bg-gray-900 text-green-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
-    </div>
-
-    <!-- Accounts Screen -->
-    <div id="accountScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold mb-4">Accounts Screen</h2>
-      <button id="developLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-indigo-500 text-white font-bold text-lg shadow-md hover:bg-indigo-600 transition-transform transform hover:scale-105" onclick="developLead()">Develop Lead</button>
-      <div class="w-full bg-gray-200 rounded-full h-6 mt-4 overflow-hidden shadow-inner">
-        <div id="progressBar" class="bg-indigo-600 h-6 rounded-full transition-all duration-200" style="width: 0%"></div>
-      </div>
-      <div class="mt-4 text-xl">Money: $<span id="moneyCount" class="font-bold">0.00</span></div>
-      <div id="adScriptText" class="mt-4 p-4 h-48 bg-gray-900 text-cyan-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
-    </div>
-
-    <!-- Staff Screen -->
-    <div id="staffScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold mb-4">Staff</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <h3 class="text-xl font-semibold mb-2">Hired Staff</h3>
-            <ul id="hiredStaffList" class="list-disc list-inside bg-gray-100 p-3 rounded-lg min-h-[100px]"></ul>
-        </div>
-        <div>
-            <div class="staff-category mb-4">
-              <h3 class="text-xl font-semibold mb-2">Sales</h3>
-              <div class="staff-list flex flex-wrap gap-2" id="salesStaffList"></div>
+        <div class="bg-gray-900 text-white p-3 rounded-lg shadow-md mb-4 sticky top-2 z-50 flex justify-around items-center text-center">
+            <div>
+                <span class="text-sm text-gray-400">Leads</span>
+                <p class="text-xl font-semibold" id="globalLeadCount">0</p>
             </div>
-            <div class="staff-category mb-4">
-              <h3 class="text-xl font-semibold mb-2">Accounts</h3>
-              <div class="staff-list flex flex-wrap gap-2" id="accountsStaffList"></div>
+            <div>
+                <span class="text-sm text-gray-400">Money</span>
+                <p class="text-xl font-semibold">$<span id="globalMoneyCount">0.00</span></p>
             </div>
-            <div class="staff-category">
-              <h3 class="text-xl font-semibold mb-2">Products</h3>
-              <div class="staff-list flex flex-wrap gap-2" id="productsStaffList"></div>
+            <div>
+                <span class="text-sm text-gray-400">Rate</span>
+                <p class="text-xl font-semibold">$<span id="globalRate">0.00</span>/s</p>
             </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Upgrades Screen -->
-    <div id="upgradesScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-4">Upgrades</h2>
-        <div class="upgrade-category mb-6">
-            <h3 class="text-xl font-semibold border-b-2 border-gray-200 pb-2 mb-3">Sales Upgrades</h3>
-            <div id="salesUpgradesList" class="space-y-3"></div>
+        <div id="nav-buttons" class="bg-white rounded-lg shadow-md p-2 mb-4 flex flex-wrap justify-center gap-2">
+            <button data-screen="salesScreen" class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Sales</button>
+            <button data-screen="accountScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Accounts</button>
+            <button data-screen="staffScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Staff</button>
+            <button data-screen="upgradesScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Upgrades</button>
+            <button data-screen="achievementsScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Achievements</button>
+            <button data-screen="statsScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Statistics</button>
         </div>
-        <div class="upgrade-category mb-6">
-            <h3 class="text-xl font-semibold border-b-2 border-gray-200 pb-2 mb-3">Accounts Upgrades</h3>
-            <div id="accountsUpgradesList" class="space-y-3"></div>
+
+        <div id="salesScreen" class="screen active p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Sales Screen</h2>
+            <button id="generateLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-green-500 text-white font-bold text-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105">Generate Lead</button>
+            <div id="emailText" class="mt-4 p-4 h-48 bg-gray-900 text-green-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
         </div>
-        <div class="upgrade-category">
-            <h3 class="text-xl font-semibold border-b-2 border-gray-200 pb-2 mb-3">Global Upgrades</h3>
-            <div id="globalUpgradesList" class="space-y-3"></div>
+
+        <div id="accountScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Accounts Screen</h2>
+            <button id="developLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-indigo-500 text-white font-bold text-lg shadow-md hover:bg-indigo-600 transition-transform transform hover:scale-105">Develop Lead</button>
+            <div class="w-full bg-gray-200 rounded-full h-6 mt-4 overflow-hidden shadow-inner">
+                <div id="progressBar" class="bg-indigo-600 h-6 rounded-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+            <div id="adScriptText" class="mt-4 p-4 h-48 bg-gray-900 text-cyan-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
         </div>
+
+        <div id="staffScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Staff</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Hired Staff</h3>
+                    <ul id="hiredStaffList" class="list-disc list-inside bg-gray-100 p-3 rounded-lg min-h-[100px]"></ul>
+                </div>
+                <div id="staff-for-hire" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <div id="upgradesScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Upgrades</h2>
+            <div id="upgrades-container" class="space-y-6"></div>
+        </div>
+        
+        <div id="achievementsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Achievements</h2>
+            <div id="achievementsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div class="mt-8 text-center space-x-4">
+                <button id="manualSaveBtn" class="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Manual Save</button>
+                <button id="resetProgressBtn" class="px-4 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Reset Progress</button>
+            </div>
+        </div>
+
+        <div id="statsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Statistics</h2>
+            <div id="statisticsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
     </div>
     
-    <!-- Achievements Screen -->
-    <div id="achievementsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-4">Achievements</h2>
-        <div id="achievementsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-        <div class="mt-8 text-center space-x-4">
-            <button id="manualSaveBtn" class="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Manual Save</button>
-            <button id="resetProgressBtn" class="px-4 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Reset Progress</button>
-        </div>
+    <div id="achievement-popup" class="fixed bottom-5 right-5 bg-gray-900 text-white p-4 rounded-lg shadow-2xl opacity-0 transform translate-y-10 pointer-events-none">
+        <h3 class="font-bold text-lg text-yellow-400" id="achievement-title"></h3>
+        <p class="text-sm" id="achievement-desc"></p>
     </div>
 
-    <!-- Statistics Screen -->
-    <div id="statsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-4">Statistics</h2>
-        <div id="statisticsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-    </div>
-
-  </div>
-  
-  <!-- Achievement Popup -->
-  <div id="achievement-popup" class="fixed bottom-5 right-5 bg-gray-900 text-white p-4 rounded-lg shadow-2xl opacity-0 transform translate-y-10 pointer-events-none">
-      <h3 class="font-bold text-lg text-yellow-400" id="achievement-title"></h3>
-      <p class="text-sm" id="achievement-desc"></p>
-  </div>
-
-  <!-- Welcome Back Modal -->
-    <div id="welcome-back-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div id="welcome-back-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl text-center">
             <h2 class="text-2xl font-bold mb-4">Welcome Back!</h2>
             <p>While you were away, your team earned:</p>
@@ -160,8 +128,7 @@
         </div>
     </div>
 
-    <!-- Event Modal -->
-    <div id="event-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div id="event-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm relative mx-4">
             <button id="close-event-modal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
             <h2 class="text-2xl font-bold mb-2" id="event-title"></h2>
@@ -170,8 +137,7 @@
         </div>
     </div>
 
-    <!-- Event Details Modal (for timer hover) -->
-    <div id="event-details-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div id="event-details-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm relative mx-4">
             <button id="close-event-details-modal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
             <h2 class="text-2xl font-bold mb-2" id="event-details-title"></h2>
@@ -179,695 +145,704 @@
         </div>
     </div>
 
-    <!-- Active Event Timer -->
     <div id="active-event-timer" class="fixed bottom-5 left-5 bg-gray-900 text-white p-3 rounded-lg shadow-2xl hidden z-40 cursor-pointer">
         <h4 class="font-bold text-md" id="active-event-title"></h4>
         <p class="text-sm text-center" id="active-event-time-left"></p>
     </div>
 
+<script>
+// --- DOM ELEMENTS ---
+const DOM = {
+    globalLeadCount: document.getElementById('globalLeadCount'),
+    globalMoneyCount: document.getElementById('globalMoneyCount'),
+    globalRate: document.getElementById('globalRate'),
+    navButtons: document.getElementById('nav-buttons'),
+    screens: document.querySelectorAll('.screen'),
+    generateLeadBtn: document.getElementById('generateLeadBtn'),
+    developLeadBtn: document.getElementById('developLeadBtn'),
+    emailText: document.getElementById('emailText'),
+    adScriptText: document.getElementById('adScriptText'),
+    progressBar: document.getElementById('progressBar'),
+    hiredStaffList: document.getElementById('hiredStaffList'),
+    staffForHire: document.getElementById('staff-for-hire'),
+    upgradesContainer: document.getElementById('upgrades-container'),
+    achievementsList: document.getElementById('achievementsList'),
+    statisticsList: document.getElementById('statisticsList'),
+    manualSaveBtn: document.getElementById('manualSaveBtn'),
+    resetProgressBtn: document.getElementById('resetProgressBtn'),
+    // Modals & Popups
+    achievementPopup: {
+        el: document.getElementById('achievement-popup'),
+        title: document.getElementById('achievement-title'),
+        desc: document.getElementById('achievement-desc'),
+    },
+    welcomeModal: {
+        el: document.getElementById('welcome-back-modal'),
+        earnings: document.getElementById('offline-earnings'),
+        closeBtn: document.getElementById('close-welcome-modal'),
+    },
+    eventModal: {
+        el: document.getElementById('event-modal'),
+        title: document.getElementById('event-title'),
+        description: document.getElementById('event-description'),
+        choices: document.getElementById('event-choices'),
+        closeBtn: document.getElementById('close-event-modal'),
+    },
+    eventDetailsModal: {
+        el: document.getElementById('event-details-modal'),
+        title: document.getElementById('event-details-title'),
+        description: document.getElementById('event-details-description'),
+        closeBtn: document.getElementById('close-event-details-modal'),
+    },
+    activeEventTimer: {
+        el: document.getElementById('active-event-timer'),
+        title: document.getElementById('active-event-title'),
+        timeLeft: document.getElementById('active-event-time-left'),
+    }
+};
 
-  <script>
-    // --- GAME STATE VARIABLES ---
-    let leads = 0, money = 0, developClicks = 0, passiveIncome = 0, totalMoneyEarned = 0;
-    let emailCharIndex = 0, adCharIndex = 0;
-    let leadGenerationChance = 0.01;
-    let clicksToDevelopLead = 100;
-    let incomePerLead = 0.01;
-    let holdInterval = null;
-    let salesStaffCost = 5;
-    let accountsStaffCost = 10;
-    let gameStats = {
-        totalManualClicks: 0,
-        totalLeadsGenerated: 0,
-        gameStartTime: Date.now(),
-        playTime: 0
-    };
-    let eventCooldown = 180;
-    let activeEvent = null;
+// --- GAME DATA ---
+const staffData = {
+    sales: {
+        name: 'Sales',
+        cost: 5,
+        costMultiplier: 3.5,
+        members: ['Artyom', 'Alan', 'Aruna', 'Dora', 'Syrym', 'Aidos', 'Alimzhan', 'Anna', 'Bolat', 'Yerbol', 'Madi'],
+    },
+    accounts: {
+        name: 'Accounts',
+        cost: 5,
+        costMultiplier: 3.5,
+        members: ['Azret', 'Asiya', 'Daniil', 'Aizhan', 'Amir', 'Akzhan', 'Anuar', 'Hakim', 'Saniya', 'Sanzhar'],
+    },
+    products: {
+        name: 'Products',
+        cost: 100,
+        costMultiplier: 1, // No multiplier for single member
+        members: ['Emil'],
+    }
+};
 
-    // --- CONTENT & CONFIG ---
-    const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well. I'm writing to follow up on our previous conversation regarding the exciting monetization opportunities available to you...`;
-    const adScriptContent = `// Monetization Script\nfunction showAd() {\n  const ad = document.createElement('div');\n  ad.className = 'ad-banner';\n  ad.innerText = 'This space is monetized!';\n  document.body.appendChild(ad);\n}\nsetInterval(showAd, 5000);`;
-    let hiredStaff = new Set();
-    const staffButtons = {};
-    const staffMembers = {
-      sales: ['Artyom', 'Alan', 'Aruna', 'Dora', 'Syrym'],
-      accounts: ['Azret', 'Asiya', 'Daniil', 'Aizhan', 'Amir', 'Akzhan'],
-      products: ['Emil']
-    };
+const upgradeData = {
+    sales: {
+        name: 'Sales Upgrades',
+        upgrades: {
+            betterLeadForms: { name: 'Better Lead Forms', desc: (g) => `Increases manual lead gen chance by ${(g.upgrades.betterLeadForms.chanceIncrease * 100).toFixed(0)}pp. Current: ${(g.getLeadChance() * 100).toFixed(2)}%`, cost: 1, costMultiplier: 5, maxLevel: 0, chanceIncrease: 0.01, onPurchase: (g) => { g.upgrades.betterLeadForms.level++; } },
+            leadMagnet: { name: 'Lead Magnet', desc: (g) => `Manual clicks generate ${g.upgrades.leadMagnet.multiplier}x leads.`, cost: 50, costMultiplier: 10, maxLevel: 0, multiplier: 1, onPurchase: (g) => { g.upgrades.leadMagnet.level++; g.upgrades.leadMagnet.multiplier *= 2; } },
+            betterEmailSubject: { name: 'Better Email Subject', desc: (g) => `+1% bonus lead chance per Sales staff.`, cost: 20, costMultiplier: 3, maxLevel: 0, onPurchase: (g) => { g.upgrades.betterEmailSubject.level++; } },
+            referralProgram: { name: 'Referral Program', desc: (g) => `Passively generate ${g.upgrades.referralProgram.level} lead(s) every 10 seconds.`, cost: 15, costMultiplier: 3, maxLevel: 0, onPurchase: (g) => { g.upgrades.referralProgram.level++; } },
+            aggressiveFollowup: { name: 'Aggressive Followup', desc: (g) => `+5% chance per click to instantly develop a lead. Current: ${(g.upgrades.aggressiveFollowup.chance * 100).toFixed(0)}%`, cost: 7, costMultiplier: 3, maxLevel: 0, chance: 0, onPurchase: (g) => { g.upgrades.aggressiveFollowup.level++; g.upgrades.aggressiveFollowup.chance += 0.05; } },
+        }
+    },
+    accounts: {
+        name: 'Accounts Upgrades',
+        upgrades: {
+            asiyasHelp: { name: 'Asiya’s Help', desc: (g) => `Reduces clicks needed to develop a lead by ${g.upgrades.asiyasHelp.clicksReduction}. Current: ${g.clicksToDevelopLead}`, cost: 3, costMultiplier: 5, maxLevel: 0, clicksReduction: 10, onPurchase: (g) => { g.upgrades.asiyasHelp.level++; g.clicksToDevelopLead = Math.max(10, g.clicksToDevelopLead - g.upgrades.asiyasHelp.clicksReduction); }, isMaxed: (g) => g.clicksToDevelopLead <= 10 },
+            secondMonitor: { name: '2nd Monitor', desc: () => `Each manual click on "Develop Lead" counts as two.`, cost: 10, oneTime: true, onPurchase: (g) => { g.upgrades.secondMonitor.purchased = true; } },
+            newAdNetworks: { name: 'New Ad Networks', desc: (g) => `Each developed lead earns +$${g.upgrades.newAdNetworks.incomeBonus.toFixed(2)} more. Current: $${g.incomePerLead.toFixed(2)}`, cost: 10, costMultiplier: 2, maxLevel: 0, incomeBonus: 0.01, onPurchase: (g) => { g.upgrades.newAdNetworks.level++; g.incomePerLead += g.upgrades.newAdNetworks.incomeBonus; } },
+            backgroundMusic: { name: 'Background Music', desc: (g) => `+${g.upgrades.backgroundMusic.level} click/sec to each Accounts staff.`, cost: 100, costMultiplier: 15, maxLevel: 0, onPurchase: (g) => { g.upgrades.backgroundMusic.level++; } },
+            cpmOptimization: { name: 'CPM Optimization', desc: (g) => `${(g.upgrades.cpmOptimization.chance * 100).toFixed(0)}% chance to double money from a lead.`, cost: 500, costMultiplier: 3, maxLevel: 0, chance: 0, onPurchase: (g) => { g.upgrades.cpmOptimization.level++; g.upgrades.cpmOptimization.chance = Math.min(1, g.upgrades.cpmOptimization.chance + 0.2); }, isMaxed: (g) => g.upgrades.cpmOptimization.chance >= 1 },
+        }
+    },
+    global: {
+        name: 'Global Upgrades',
+        upgrades: {
+            nytPuzzles: { name: 'NYT Puzzles', desc: (g) => `Boosts Sales/Account upgrade effectiveness by x1.5.`, cost: 15, oneTime: true, onPurchase: (g) => { g.upgrades.nytPuzzles.purchased = true; g.upgrades.betterLeadForms.chanceIncrease *= 1.5; g.upgrades.asiyasHelp.clicksReduction = Math.round(g.upgrades.asiyasHelp.clicksReduction * 1.5); } },
+            corporateCulture: { name: 'Corporate Culture', desc: () => `All manual clicks count as two.`, cost: 50, oneTime: true, onPurchase: (g) => { g.upgrades.corporateCulture.purchased = true; } },
+            sycGlobal: { name: 'СУЦ', desc: () => `All income from developing leads is increased by 20%.`, cost: 250, oneTime: true, multiplier: 1.2, onPurchase: (g) => { g.upgrades.sycGlobal.purchased = true; } },
+            amirsAutomation: { name: 'Amir’s Automation', desc: () => `Automated staff work twice as fast.`, cost: 5000, oneTime: true, onPurchase: (g) => { g.upgrades.amirsAutomation.purchased = true; } },
+            coffeeMachine: { name: 'Coffee Machine', desc: () => `Allows holding down the mouse button to click rapidly.`, cost: 100, oneTime: true, onPurchase: (g) => { g.upgrades.coffeeMachine.purchased = true; g.applyCoffeeMachineListeners(); } },
+        }
+    }
+};
 
-    let upgrades = {
-      // Sales
-      betterLeadForms: { level: 0, cost: 1, costMultiplier: 5, chanceIncrease: 0.001 },
-      referralProgram: { level: 0, cost: 15, costMultiplier: 3, interval: null },
-      aggressiveFollowup: { level: 0, cost: 7, costMultiplier: 3, chance: 0 },
-      leadMagnet: { level: 0, cost: 50, costMultiplier: 10, multiplier: 1 },
-      betterEmailSubject: { level: 0, cost: 20, costMultiplier: 3 },
-      // Accounts
-      asiyasHelp: { level: 0, cost: 5, costMultiplier: 5, clicksReduction: 10 },
-      secondMonitor: { purchased: false, cost: 10 },
-      newAdNetworks: { level: 0, cost: 10, costMultiplier: 3, incomeBonus: 0.1 },
-      backgroundMusic: { level: 0, cost: 100, costMultiplier: 10 },
-      cpmOptimization: { level: 0, cost: 500, costMultiplier: 3, chance: 0 },
-      // Global
-      nytPuzzles: { purchased: false, cost: 15, multiplier: 1.5 },
-      corporateCulture: { purchased: false, cost: 50 },
-      sycGlobal: { purchased: false, cost: 25, multiplier: 1.2 },
-      coffeeMachine: { purchased: false, cost: 100 },
-      amirsAutomation: { purchased: false, cost: 1000 }
-    };
-    
-    let achievements = {
-        mukhtarSatisfied: { name: "Mukhtar is satisfied", description: "Earn $50 total.", unlocked: false, condition: () => totalMoneyEarned >= 50 },
-        mukhtarHappy: { name: "Mukhtar is happy", description: "Earn $100 total.", unlocked: false, condition: () => totalMoneyEarned >= 100 },
-        mukhtarReallyHappy: { name: "Mukhtar is REALLY happy", description: "Earn $1,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 1000 },
-        someonePromoted: { name: "Someone is getting promoted", description: "Earn $5,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 5000 },
-        syc: { name: "100% СУЦ", description: "Earn $10,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 10000 },
-        buyMyUSDT: { name: "Buy my USDT", description: "Hire Emil.", unlocked: false, condition: () => hiredStaff.has('Emil') },
-        shapkaGang: { name: "Шапка gang", description: "Hire all staff.", unlocked: false, condition: () => hiredStaff.size === (staffMembers.sales.length + staffMembers.accounts.length + staffMembers.products.length) }
-    };
+const achievementData = {
+    mukhtarSatisfied: { name: "Mukhtar is satisfied", description: "Earn $50 total.", condition: (g) => g.stats.totalMoneyEarned >= 50 },
+    mukhtarHappy: { name: "Mukhtar is happy", description: "Earn $100 total.", condition: (g) => g.stats.totalMoneyEarned >= 100 },
+    mukhtarReallyHappy: { name: "Mukhtar is REALLY happy", description: "Earn $1,000 total.", condition: (g) => g.stats.totalMoneyEarned >= 1000 },
+    someonePromoted: { name: "Someone is getting promoted", description: "Earn $5,000 total.", condition: (g) => g.stats.totalMoneyEarned >= 5000 },
+    syc: { name: "100% СУЦ", description: "Earn $10,000 total.", condition: (g) => g.stats.totalMoneyEarned >= 10000 },
+    carpalTunnel: { name: "Carpal Tunnel Syndrome", description: "Manually click 10,000 times.", condition: (g) => g.stats.totalManualClicks >= 10000 },
+    buyMyUSDT: { name: "Buy my USDT", description: "Hire Emil.", condition: (g) => g.hiredStaff.has('Emil') },
+    salesDivision: { name: "Sales Division Assembled", description: "Hire every staff member from the Sales department.", condition: (g) => staffData.sales.members.every(name => g.hiredStaff.has(name)) },
+    accountsDivision: { name: "Accounts Division Assembled", description: "Hire every staff member from the Accounts department.", condition: (g) => staffData.accounts.members.every(name => g.hiredStaff.has(name)) },
+    peakEfficiency: { name: "Peak Efficiency", description: "Purchase all of the one-time Global Upgrades.", condition: (g) => Object.keys(upgradeData.global.upgrades).every(key => g.upgrades[key].purchased) },
+    shapkaGang: { name: "Шапка gang", description: "Hire all staff.", condition: (g) => {
+        const totalStaff = Object.values(staffData).reduce((sum, type) => sum + type.members.length, 0);
+        return g.hiredStaff.size === totalStaff;
+    }},
+    crisisAverted: { name: "Crisis Averted", description: "Successfully navigate a \"Server Crash\" event by waiting it out instead of paying.", condition: (g) => g.stats.waitedOutServerCrash }
+};
 
-    let salesStaffCount = 0, accountStaffCount = 0, productStaffCount = 0;
-    const staffIntervals = [];
-    let gameLoopInterval = null;
+const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well. I'm writing to follow up on our previous conversation regarding the exciting monetization opportunities available to you...`;
+const adScriptContent = `// Monetization Script\nfunction showAd() {\n  const ad = document.createElement('div');\n  ad.className = 'ad-banner';\n  ad.innerText = 'This space is monetized!';\n  document.body.appendChild(ad);\n}\nsetInterval(showAd, 5000);`;
 
-    // --- SAVE/LOAD LOGIC ---
-    function saveGame() {
-        const gameState = {
-            leads, money, developClicks, passiveIncome, totalMoneyEarned,
-            emailCharIndex, adCharIndex, leadGenerationChance, clicksToDevelopLead,
-            incomePerLead, salesStaffCost, accountsStaffCost,
-            hiredStaff: Array.from(hiredStaff),
-            upgrades,
-            achievements,
-            gameStats,
-            salesStaffCount, accountStaffCount, productStaffCount,
-            lastSavedTime: Date.now(),
-            activeEvent, eventCooldown
-        };
-        localStorage.setItem('monetizationSimSave', JSON.stringify(gameState));
+const eventData = {
+    viralMarketing: {
+        title: "Viral Marketing Campaign",
+        description: (name) => `${name}’s latest email campaign went viral on social media! The leads are pouring in.`,
+        effectDescription: "For the next 60 seconds, every lead generation action produces 5x the normal amount of leads.",
+        duration: 60,
+        type: 'good'
+    },
+    bullMarket: {
+        title: "Bull Market",
+        description: () => "The market is hot! Advertisers are paying a premium for ad space.",
+        effectDescription: "All income from developing leads is doubled for the next 90 seconds.",
+        duration: 90,
+        type: 'good'
+    },
+    productivityGuru: {
+        title: "Productivity Guru Visits",
+        description: () => "A famous инфоцыган visited the office and motivated the team!",
+        effectDescription: "All staff members work 50% faster for the next 3 minutes.",
+        duration: 180,
+        type: 'good'
+    },
+    foundInvoice: {
+        title: "Found an Old Invoice",
+        description: (name) => `While cleaning out a filing cabinet, ${name} found an old, unpaid invoice from a client.`,
+        effectDescription: "Instantly gain a lump sum of money equal to 10% of your current balance.",
+        duration: 0,
+        type: 'good'
+    },
+    abTest: {
+        title: "Successful A/B Test",
+        description: (name) => `${name} ran an A/B test on a new ad format, and it's a huge success!`,
+        effectDescription: "The base income per lead is temporarily increased by +$0.50 for the next 2 minutes.",
+        duration: 120,
+        type: 'good',
+        onStart: (g) => { g.incomePerLead += 0.5; },
+        onEnd: (g) => { g.incomePerLead -= 0.5; }
+    },
+    serverCrash: {
+        title: "Server Crash!",
+        description: () => "Oh no! Reports has crashed, halting all operations.",
+        type: 'choice',
+        choices: [
+            { text: "Pay $500", action: (g) => { if(g.money >= 500) { g.money -= 500; } else { g.startEvent('serverCrashPenalty'); } } },
+            { text: "Wait 60s", action: (g) => { g.startEvent('serverCrashPenalty'); g.stats.waitedOutServerCrash = true; } }
+        ]
+    },
+    serverCrashPenalty: {
+        title: "Server Down",
+        effectDescription: "All income and lead development is halted.",
+        duration: 60,
+        type: 'bad'
+    },
+    adNetworkOutage: {
+        title: "Ad Network Outage",
+        description: () => "One of your biggest ad networks is experiencing a global outage.",
+        effectDescription: "The money earned per lead is halved for the next 90 seconds.",
+        duration: 90,
+        type: 'bad',
+        onStart: (g) => { g.incomePerLead /= 2; },
+        onEnd: (g) => { g.incomePerLead *= 2; }
+    },
+    teamBurnout: {
+        title: "Team Burnout",
+        description: (name) => `${name} is feeling overworked and exhausted after a long week.`,
+        effectDescription: "All staff members work 25% slower for the next 3 minutes.",
+        duration: 180,
+        type: 'bad'
+    },
+    officeExpense: {
+        title: "Unexpected Office Expense",
+        description: () => "The water cooler broke down and needs an immediate, expensive repair!",
+        effectDescription: "Instantly lose 5% of your current money.",
+        duration: 0,
+        type: 'bad'
+    },
+    negativePR: {
+        title: "Negative PR",
+        description: () => "A competitor published a negative article about your company, hurting your reputation.",
+        effectDescription: "Your chance to generate a lead is reduced by 50% for the next 2 minutes.",
+        duration: 120,
+        type: 'bad',
+        onStart: (g) => { g.leadGenerationChance /= 2; },
+        onEnd: (g) => { g.leadGenerationChance *= 2; }
+    }
+};
+
+
+// --- GAME STATE & LOGIC ---
+class MonetizationGame {
+    constructor() {
+        this.load(); // Load game state or set defaults
+        this.activeIntervals = [];
+        this.holdInterval = null;
     }
 
-    function loadGame() {
-        const savedData = localStorage.getItem('monetizationSimSave');
-        if (!savedData) return;
+    // --- State Management ---
+    getDefaultState() {
+        return {
+            leads: 0,
+            money: 0,
+            developClicks: 0,
+            incomePerLead: 0.02,
+            incomeRate: 0,
+            clicksToDevelopLead: 100,
+            hiredStaff: new Set(),
+            staffCosts: {
+                sales: staffData.sales.cost,
+                accounts: staffData.accounts.cost,
+                products: staffData.products.cost
+            },
+            upgrades: this.getInitialUpgradeState(),
+            achievements: this.getInitialAchievementState(),
+            stats: {
+                totalMoneyEarned: 0,
+                totalManualClicks: 0,
+                totalLeadsGenerated: 0,
+                playTime: 0,
+                waitedOutServerCrash: false,
+            },
+            lastSavedTime: Date.now(),
+            activeEvent: null,
+            eventCooldown: 180,
+            // Non-saved transient state
+            emailCharIndex: 0,
+            adCharIndex: 0,
+        };
+    }
 
-        const gameState = JSON.parse(savedData);
-        
-        leads = gameState.leads || 0;
-        money = gameState.money || 0;
-        developClicks = gameState.developClicks || 0;
-        passiveIncome = gameState.passiveIncome || 0;
-        totalMoneyEarned = gameState.totalMoneyEarned || 0;
-        emailCharIndex = gameState.emailCharIndex || 0;
-        adCharIndex = gameState.adCharIndex || 0;
-        leadGenerationChance = gameState.leadGenerationChance || 0.01;
-        clicksToDevelopLead = gameState.clicksToDevelopLead || 100;
-        incomePerLead = gameState.incomePerLead || 0.01;
-        salesStaffCost = gameState.salesStaffCost || 5;
-        accountsStaffCost = gameState.accountsStaffCost || 10;
-        salesStaffCount = gameState.salesStaffCount || 0;
-        accountStaffCount = gameState.accountStaffCount || 0;
-        productStaffCount = gameState.productStaffCount || 0;
-        eventCooldown = gameState.eventCooldown || 180;
-        activeEvent = gameState.activeEvent || null;
-        
-        Object.assign(upgrades, gameState.upgrades);
-        Object.assign(achievements, gameState.achievements);
-        Object.assign(gameStats, gameState.gameStats);
-        
-        hiredStaff = new Set(gameState.hiredStaff || []);
+    getInitialUpgradeState() {
+        const state = {};
+        for (const category in upgradeData) {
+            for (const key in upgradeData[category].upgrades) {
+                const u = upgradeData[category].upgrades[key];
+                state[key] = u.oneTime ? { purchased: false } : { level: 0, ...u };
+            }
+        }
+        return state;
+    }
 
-        const lastSavedTime = gameState.lastSavedTime || Date.now();
-        const timeDiffSeconds = Math.floor((Date.now() - lastSavedTime) / 1000);
+    getInitialAchievementState() {
+        const state = {};
+        for (const key in achievementData) {
+            state[key] = { unlocked: false };
+        }
+        return state;
+    }
+
+    save() {
+        const stateToSave = { ...this };
+        delete stateToSave.activeIntervals;
+        delete stateToSave.holdInterval;
+        stateToSave.hiredStaff = Array.from(this.hiredStaff);
+        stateToSave.lastSavedTime = Date.now();
+        localStorage.setItem('monetizationSimSave_v2', JSON.stringify(stateToSave));
+    }
+
+    load() {
+        const savedData = localStorage.getItem('monetizationSimSave_v2');
+        const defaultState = this.getDefaultState();
+
+        if (savedData) {
+            try {
+                const savedState = JSON.parse(savedData);
+                // Merge the saved state into the default state.
+                // This ensures any new properties in the default state are preserved if they don't exist in the save file.
+                const mergedState = { ...defaultState, ...savedState };
+
+                Object.assign(this, mergedState);
+
+                // Handle nested objects and Sets carefully to ensure they are also merged and not just replaced.
+                this.hiredStaff = new Set(savedState.hiredStaff || []);
+                this.upgrades = { ...defaultState.upgrades, ...savedState.upgrades };
+                this.achievements = { ...defaultState.achievements, ...savedState.achievements };
+                this.stats = { ...defaultState.stats, ...savedState.stats };
+                this.staffCosts = { ...defaultState.staffCosts, ...savedState.staffCosts };
+
+                this.handleOfflineProgress(savedState.lastSavedTime || Date.now());
+            } catch (error) {
+                console.error("Failed to load saved data, starting fresh.", error);
+                Object.assign(this, defaultState);
+            }
+        } else {
+            Object.assign(this, defaultState);
+        }
+    }
+    
+    handleOfflineProgress(lastSavedTime) {
+        const timeDiffSeconds = Math.floor((Date.now() - (lastSavedTime || Date.now())) / 1000);
         if (timeDiffSeconds > 5) {
-            const offlineEarnings = passiveIncome * timeDiffSeconds * 0.5;
-            money += offlineEarnings;
-            totalMoneyEarned += offlineEarnings;
-            showWelcomeBackModal(offlineEarnings);
+            const offlineEarnings = (this.incomeRate || 0) * timeDiffSeconds * 0.5;
+            if (offlineEarnings > 0) {
+                this.money += offlineEarnings;
+                this.stats.totalMoneyEarned += offlineEarnings;
+                this.showWelcomeBackModal(offlineEarnings);
+            }
         }
     }
 
-    function resetGame() {
+    reset() {
         if (confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
-            localStorage.removeItem('monetizationSimSave');
+            localStorage.removeItem('monetizationSimSave_v2');
             location.reload();
         }
     }
 
-    // --- UI & DISPLAY FUNCTIONS ---
-    function updateGlobalStats() {
-      document.getElementById('globalLeadCount').textContent = leads;
-      document.getElementById('globalMoneyCount').textContent = money.toFixed(2);
-      document.getElementById('globalRate').textContent = passiveIncome.toFixed(2);
+    // --- Core Gameplay ---
+    getLeadChance() {
+        let chance = 0.01;
+        chance += this.upgrades.betterLeadForms.level * this.upgrades.betterLeadForms.chanceIncrease;
+        chance += 0.01 * this.getStaffCount('sales') * this.upgrades.betterEmailSubject.level;
+        if (this.activeEvent && this.activeEvent.key === 'negativePR') {
+            chance /= 2;
+        }
+        return chance;
     }
 
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      
-      const navButtons = document.querySelectorAll('#nav-buttons button');
-      navButtons.forEach(btn => {
-          btn.classList.remove('bg-blue-500', 'text-white');
-          btn.classList.add('bg-gray-200', 'text-gray-700');
-      });
-      
-      const activeButton = Array.from(navButtons).find(btn => btn.getAttribute('onclick') === `showScreen('${id}')`);
-      if(activeButton) {
-          activeButton.classList.add('bg-blue-500', 'text-white');
-          activeButton.classList.remove('bg-gray-200', 'text-gray-700');
-      }
+    getPassiveIncome() {
+        return this.incomeRate;
     }
 
-    function createFeedbackPopup(text, element) {
+    tryGenerateLead(isManualClick = false) {
+        if (isManualClick) {
+            this.stats.totalManualClicks++;
+            if (this.emailCharIndex >= emailContent.length) {
+                this.emailCharIndex = 0;
+            }
+            this.emailCharIndex++;
+        }
+
+        const performAction = () => {
+            if (Math.random() < this.getLeadChance()) {
+                let leadsGained = this.upgrades.leadMagnet.multiplier;
+                if (this.activeEvent && this.activeEvent.key === 'viralMarketing') {
+                    leadsGained *= 5;
+                }
+                this.leads += leadsGained;
+                this.stats.totalLeadsGenerated += leadsGained;
+                if (isManualClick) this.createFeedbackPopup(`+${leadsGained} Lead`, DOM.generateLeadBtn);
+            }
+            if (isManualClick && Math.random() < this.upgrades.aggressiveFollowup.chance) {
+                this.developLead(false);
+            }
+        };
+
+        const clickMultiplier = isManualClick && this.upgrades.corporateCulture.purchased ? 2 : 1;
+        for (let i = 0; i < clickMultiplier; i++) performAction();
+        
+        if (isManualClick) {
+            this.updateSalesScreen();
+            this.updateGlobalStats();
+        }
+    }
+
+    developLead(isManualClick = false) {
+        if (this.leads <= 0 && isManualClick) return;
+        
+        if (isManualClick) {
+            this.stats.totalManualClicks++;
+            if (this.adCharIndex >= adScriptContent.length) {
+                this.adCharIndex = 0;
+            }
+            this.adCharIndex++;
+        }
+
+        if (this.leads <= 0) return;
+
+        let clickMultiplier = 1;
+        if (isManualClick) {
+            if (this.upgrades.secondMonitor.purchased) clickMultiplier *= 2;
+            if (this.upgrades.corporateCulture.purchased) clickMultiplier *= 2;
+        }
+        this.developClicks += clickMultiplier;
+
+        while (this.developClicks >= this.clicksToDevelopLead && this.leads > 0) {
+            const incomeFromLead = this.getIncomeFromLead();
+            this.incomeRate += incomeFromLead;
+            this.developClicks -= this.clicksToDevelopLead;
+            this.leads--;
+            if (isManualClick) this.createFeedbackPopup(`+$${incomeFromLead.toFixed(2)}/s`, DOM.developLeadBtn);
+        }
+        
+        if (isManualClick) {
+            this.updateAccountScreen();
+            this.updateGlobalStats();
+        }
+    }
+    
+    getIncomeFromLead() {
+        let income = this.incomePerLead;
+        if (this.upgrades.sycGlobal.purchased) income *= this.upgrades.sycGlobal.multiplier;
+        if (Math.random() < this.upgrades.cpmOptimization.chance) income *= 2;
+        if (this.activeEvent && this.activeEvent.key === 'bullMarket') income *= 2;
+        if (this.activeEvent && this.activeEvent.key === 'adNetworkOutage') income /= 2;
+        return income;
+    }
+
+    hireStaff(type, name) {
+        const cost = this.staffCosts[type];
+        if (this.money < cost) {
+            console.log("Not enough money");
+            return;
+        }
+        this.money -= cost;
+        this.hiredStaff.add(name);
+        this.staffCosts[type] *= staffData[type].costMultiplier;
+
+        if (type === 'products') {
+            this.incomeRate += 5;
+        }
+
+        this.restartIntervals();
+        this.renderAll();
+        this.checkAchievements();
+    }
+
+    buyUpgrade(categoryKey, upgradeKey) {
+        const upgradeDef = upgradeData[categoryKey].upgrades[upgradeKey];
+        const upgradeState = this.upgrades[upgradeKey];
+        const cost = upgradeDef.oneTime ? upgradeDef.cost : upgradeState.cost;
+
+        if (this.money < cost) {
+            console.log("Not enough money for upgrade");
+            return;
+        }
+        this.money -= cost;
+        upgradeDef.onPurchase(this);
+
+        if (!upgradeDef.oneTime) {
+            upgradeState.cost *= upgradeDef.costMultiplier;
+        }
+
+        this.restartIntervals();
+        this.renderAll();
+    }
+    
+    isStaffUnlocked(name) {
+        if (name === 'Azret') return true;
+        if (name === 'Artyom') return this.hiredStaff.has('Azret');
+        if (name === 'Asiya') return this.hiredStaff.has('Artyom');
+        if (name === 'Emil') return this.hiredStaff.has('Asiya');
+
+        // All other staff are unlocked after Asiya
+        if (name !== 'Azret' && name !== 'Artyom' && name !== 'Asiya' && name !== 'Emil') {
+            return this.hiredStaff.has('Asiya');
+        }
+        return false;
+    }
+
+    // --- UI & Rendering ---
+    renderAll() {
+        this.updateGlobalStats();
+        this.updateSalesScreen();
+        this.updateAccountScreen();
+        this.renderStaff();
+        this.renderUpgrades();
+        this.renderAchievements();
+        this.renderStatistics();
+    }
+
+    updateGlobalStats() {
+        DOM.globalLeadCount.textContent = this.leads;
+        DOM.globalMoneyCount.textContent = this.money.toFixed(2);
+        DOM.globalRate.textContent = this.getPassiveIncome().toFixed(2);
+    }
+    
+    updateSalesScreen() {
+        DOM.emailText.textContent = emailContent.substring(0, this.emailCharIndex);
+    }
+
+    updateAccountScreen() {
+        DOM.adScriptText.textContent = adScriptContent.substring(0, this.adCharIndex);
+        const progress = this.clicksToDevelopLead > 0 ? (this.developClicks / this.clicksToDevelopLead) * 100 : 0;
+        DOM.progressBar.style.width = `${progress}%`;
+    }
+
+    renderStaff() {
+        DOM.hiredStaffList.innerHTML = '';
+        this.hiredStaff.forEach(staffName => {
+            const li = document.createElement('li');
+            const type = Object.keys(staffData).find(t => staffData[t].members.includes(staffName));
+            li.textContent = `${staffName} (${staffData[type].name})`;
+            li.className = 'text-gray-700';
+            DOM.hiredStaffList.appendChild(li);
+        });
+
+        DOM.staffForHire.innerHTML = '';
+        for (const typeKey in staffData) {
+            const typeInfo = staffData[typeKey];
+            
+            const unlockedMembers = typeInfo.members.filter(name => this.isStaffUnlocked(name));
+            if (unlockedMembers.length === 0) continue;
+
+            const categoryDiv = document.createElement('div');
+            categoryDiv.innerHTML = `<h3 class="text-xl font-semibold mb-2">${typeInfo.name}</h3>`;
+            const listDiv = document.createElement('div');
+            listDiv.className = 'staff-list flex flex-wrap gap-2';
+
+            unlockedMembers.forEach(name => {
+                const btn = document.createElement('button');
+                btn.className = 'px-3 py-1.5 rounded-md bg-yellow-400 text-yellow-900 font-semibold hover:bg-yellow-500 text-sm';
+                btn.dataset.type = typeKey;
+                btn.dataset.name = name;
+                
+                if (this.hiredStaff.has(name)) {
+                    btn.textContent = 'Hired';
+                    btn.disabled = true;
+                } else {
+                    btn.textContent = `Hire ${name} ($${this.staffCosts[typeKey].toFixed(2)})`;
+                    btn.disabled = this.money < this.staffCosts[typeKey];
+                }
+                listDiv.appendChild(btn);
+            });
+            categoryDiv.appendChild(listDiv);
+            DOM.staffForHire.appendChild(categoryDiv);
+        }
+    }
+
+    renderUpgrades() {
+        DOM.upgradesContainer.innerHTML = '';
+        for (const categoryKey in upgradeData) {
+            const category = upgradeData[categoryKey];
+            const categoryDiv = document.createElement('div');
+            categoryDiv.innerHTML = `<h3 class="text-xl font-semibold border-b-2 border-gray-200 pb-2 mb-3">${category.name}</h3>`;
+            const listDiv = document.createElement('div');
+            listDiv.className = 'space-y-3';
+            listDiv.dataset.category = categoryKey;
+
+            for (const upgradeKey in category.upgrades) {
+                const upgradeDef = category.upgrades[upgradeKey];
+
+                if (upgradeKey === 'cpmOptimization' && !this.hiredStaff.has('Amir')) {
+                    continue; 
+                }
+
+                const upgradeState = this.upgrades[upgradeKey];
+                
+                const isPurchased = upgradeDef.oneTime && upgradeState.purchased;
+                const isMaxed = upgradeDef.isMaxed && upgradeDef.isMaxed(this);
+                const cost = upgradeDef.oneTime ? upgradeDef.cost : upgradeState.cost;
+
+                const item = document.createElement('div');
+                item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
+                item.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-lg">${upgradeDef.name} ${!upgradeDef.oneTime ? `<span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${upgradeState.level}</span>` : ''}</h4>
+                        <p class="text-sm text-gray-600">${upgradeDef.desc(this)}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-4">
+                        <button data-upgrade="${upgradeKey}" class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-600">Buy</button>
+                        <p class="text-sm font-semibold mt-1">Cost: $${cost.toFixed(2)}</p>
+                    </div>`;
+                
+                const button = item.querySelector('button');
+                if (isPurchased || isMaxed || this.money < cost) {
+                    button.disabled = true;
+                    if(isPurchased) button.textContent = 'Purchased';
+                    if(isMaxed) button.textContent = 'Maxed';
+                }
+                listDiv.appendChild(item);
+            }
+            categoryDiv.appendChild(listDiv);
+            DOM.upgradesContainer.appendChild(categoryDiv);
+        }
+    }
+    
+    renderAchievements() {
+        DOM.achievementsList.innerHTML = '';
+        for (const key in achievementData) {
+            const achDef = achievementData[key];
+            const achState = this.achievements[key];
+            const item = document.createElement('div');
+            item.className = 'p-4 rounded-lg shadow-sm transition-all';
+            if (achState.unlocked) {
+                item.classList.add('bg-yellow-100', 'border', 'border-yellow-400');
+                item.innerHTML = `<h4 class="font-bold text-yellow-800">${achDef.name}</h4><p class="text-sm text-yellow-700">${achDef.description}</p>`;
+            } else {
+                item.classList.add('bg-gray-200');
+                item.innerHTML = `<h4 class="font-bold text-gray-500">Locked</h4><p class="text-sm text-gray-400">???</p>`;
+            }
+            DOM.achievementsList.appendChild(item);
+        }
+    }
+
+    renderStatistics() {
+        DOM.statisticsList.innerHTML = '';
+        const createStat = (label, value) => {
+            const statDiv = document.createElement('div');
+            statDiv.className = 'bg-gray-200 p-3 rounded-lg';
+            statDiv.innerHTML = `<span class="font-semibold">${label}:</span> ${value}`;
+            DOM.statisticsList.appendChild(statDiv);
+        };
+        const formatTime = (seconds) => {
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        };
+        createStat('Total Money Earned', `$${this.stats.totalMoneyEarned.toFixed(2)}`);
+        createStat('Total Leads Generated', this.stats.totalLeadsGenerated);
+        createStat('Manual Clicks', this.stats.totalManualClicks);
+        createStat('Play Time', formatTime(this.stats.playTime));
+    }
+
+    // --- Achievements & Popups ---
+    checkAchievements() {
+        let changed = false;
+        for (const key in achievementData) {
+            if (!this.achievements[key].unlocked && achievementData[key].condition(this)) {
+                this.achievements[key].unlocked = true;
+                this.showAchievementPopup(achievementData[key]);
+                changed = true;
+            }
+        }
+        if (changed) this.renderAchievements();
+    }
+
+    showAchievementPopup(achievement) {
+        const popup = DOM.achievementPopup;
+        popup.title.textContent = achievement.name;
+        popup.desc.textContent = achievement.description;
+        popup.el.classList.remove('opacity-0', 'translate-y-10');
+        popup.el.classList.add('opacity-100', 'translate-y-0');
+        setTimeout(() => {
+            popup.el.classList.remove('opacity-100', 'translate-y-0');
+            popup.el.classList.add('opacity-0', 'translate-y-10');
+        }, 4000);
+    }
+    
+    showWelcomeBackModal(earnings) {
+        DOM.welcomeModal.earnings.textContent = `$${earnings.toFixed(2)}`;
+        DOM.welcomeModal.el.classList.remove('hidden');
+    }
+
+    createFeedbackPopup(text, element) {
         const rect = element.getBoundingClientRect();
         const popup = document.createElement('div');
         popup.textContent = text;
         popup.className = 'feedback-popup font-bold text-lg';
         popup.style.left = `${rect.left + rect.width / 2 - 20}px`;
         popup.style.top = `${rect.top - 30}px`;
-        if (text.includes('+')) popup.style.color = 'green';
+        popup.style.color = text.includes('+') ? (text.includes('$') ? '#10B981' : '#84CC16') : '#EF4444';
         document.body.appendChild(popup);
         setTimeout(() => popup.remove(), 1000);
     }
 
-    function showWelcomeBackModal(earnings) {
-        if (earnings <= 0) return;
-        document.getElementById('offline-earnings').textContent = `$${earnings.toFixed(2)}`;
-        document.getElementById('welcome-back-modal').classList.remove('hidden');
-    }
-
-    // --- CORE GAME LOGIC ---
-    function tryGenerateLead(isManualClick = true) {
-      if (isManualClick) gameStats.totalManualClicks++;
-      const performAction = () => {
-        let leadsGained = 0;
-        if (Math.random() < leadGenerationChance) {
-            leadsGained = upgrades.leadMagnet.multiplier;
-            if (activeEvent && activeEvent.key === 'viralMarketing') leadsGained *= 5;
-            leads += leadsGained;
-            gameStats.totalLeadsGenerated += leadsGained;
-            if (isManualClick) createFeedbackPopup(`+${leadsGained} Lead`, document.getElementById('generateLeadBtn'));
-        }
-        if (isManualClick && Math.random() < upgrades.aggressiveFollowup.chance) {
-            developLead(false);
-        }
-        if (emailCharIndex >= emailContent.length) {
-            emailCharIndex = 0;
-            document.getElementById('emailText').textContent = '';
-        }
-        document.getElementById('emailText').textContent += emailContent.charAt(emailCharIndex++);
-      };
-      
-      const clicks = isManualClick && upgrades.corporateCulture.purchased ? 2 : 1;
-      for (let i = 0; i < clicks; i++) {
-        performAction();
-      }
-
-      if (!isManualClick && upgrades.amirsAutomation.purchased) {
-        performAction();
-      }
-
-      updateGlobalStats();
-    }
-
-    function developLead(isManualClick = true) {
-      if (leads <= 0) return;
-      if (isManualClick) gameStats.totalManualClicks++;
-      
-      const performAction = () => {
-        let clicks = 1;
-        if (isManualClick) {
-            clicks *= upgrades.secondMonitor.purchased ? 2 : 1;
-            clicks *= upgrades.corporateCulture.purchased ? 2 : 1;
-        }
-        developClicks += clicks;
-
-        if (developClicks >= clicksToDevelopLead) {
-            let incomeFromLead = incomePerLead;
-            if (upgrades.sycGlobal.purchased) {
-                incomeFromLead *= upgrades.sycGlobal.multiplier;
-            }
-            if (Math.random() < upgrades.cpmOptimization.chance) {
-                incomeFromLead *= 2;
-            }
-            if(activeEvent && activeEvent.key === 'bullMarket') incomeFromLead *= 2;
-
-            passiveIncome += incomeFromLead;
-            developClicks -= clicksToDevelopLead;
-            leads--;
-            if (isManualClick) createFeedbackPopup(`+$${incomeFromLead.toFixed(2)}/s`, document.getElementById('developLeadBtn'));
-        }
-        if (isManualClick) {
-            if (adCharIndex >= adScriptContent.length) {
-                adCharIndex = 0;
-                document.getElementById('adScriptText').textContent = '';
-            }
-            document.getElementById('adScriptText').textContent += adScriptContent.charAt(adCharIndex++);
-        }
-      };
-
-      performAction();
-      if (!isManualClick && upgrades.amirsAutomation.purchased) {
-        performAction();
-      }
-      
-      document.getElementById('progressBar').style.width = (developClicks / clicksToDevelopLead * 100) + "%";
-      updateGlobalStats();
-    }
-
-    function hireStaff(name, type, button) {
-      if (hiredStaff.has(name)) return;
-      let cost;
-      if (type === 'sales') cost = salesStaffCost;
-      else if (type === 'accounts') cost = accountsStaffCost;
-      else if (type === 'products') cost = 100;
-
-      if (money < cost) {
-        alert("Not enough money to hire " + name);
-        return;
-      }
-      money -= cost;
-      
-      hiredStaff.add(name);
-      if (type === 'sales') {
-        salesStaffCount++;
-        salesStaffCost *= 3;
-        recalculateLeadChance();
-      } else if (type === 'accounts') {
-        accountStaffCount++;
-        accountsStaffCost *= 3;
-      } else if (type === 'products') {
-        productStaffCount++;
-        passiveIncome += 5;
-      }
-      
-      updateFullStaffUI();
-      updateGlobalStats();
-      checkAchievements();
-    }
-    
-    function checkUnlocks() {
-        if (hiredStaff.has('Azret')) {
-            if (staffButtons['Artyom']) staffButtons['Artyom'].style.display = 'inline-block';
-        }
-        if (hiredStaff.has('Artyom')) {
-            if (staffButtons['Asiya']) staffButtons['Asiya'].style.display = 'inline-block';
-        }
-        if (hiredStaff.has('Asiya')) {
-            staffMembers.sales.forEach(name => {
-                if (name !== 'Artyom' && staffButtons[name]) staffButtons[name].style.display = 'inline-block';
-            });
-            staffMembers.accounts.forEach(name => {
-                if (name !== 'Azret' && name !== 'Asiya' && staffButtons[name]) staffButtons[name].style.display = 'inline-block';
-            });
-        }
-
-        const allSalesHired = staffMembers.sales.every(name => hiredStaff.has(name));
-        const allAccountsHired = staffMembers.accounts.every(name => hiredStaff.has(name));
-        if (allSalesHired && allAccountsHired && !hiredStaff.has('Emil') && !staffButtons['Emil']) {
-            const btn = createStaffButton('Emil', 'products');
-            document.getElementById('productsStaffList').appendChild(btn);
-            updateStaffButtonPrices();
-        }
-    }
-
-    function updateStaffButtonPrices() {
-      for (const name in staffButtons) {
-        if (hiredStaff.has(name)) continue;
-        const btn = staffButtons[name];
-        let cost;
-        if (staffMembers.sales.includes(name)) cost = salesStaffCost;
-        else if (staffMembers.accounts.includes(name)) cost = accountsStaffCost;
-        else cost = 100;
-        btn.textContent = `Hire ${name} ($${cost})`;
-      }
-    }
-
-    function createStaffButton(name, type) {
-        const btn = document.createElement('button');
-        btn.className = 'px-3 py-1.5 rounded-md bg-yellow-400 text-yellow-900 font-semibold hover:bg-yellow-500 text-sm';
-        staffButtons[name] = btn;
-        btn.onclick = () => hireStaff(name, type, btn);
-        return btn;
-    }
-
-    function createAllStaffButtons() {
-        staffMembers.sales.forEach(name => {
-            const btn = createStaffButton(name, 'sales');
-            document.getElementById('salesStaffList').appendChild(btn);
-        });
-        staffMembers.accounts.forEach(name => {
-            const btn = createStaffButton(name, 'accounts');
-            document.getElementById('accountsStaffList').appendChild(btn);
-        });
-    }
-
-    function updateFullStaffUI() {
-        document.getElementById('hiredStaffList').innerHTML = '';
-        hiredStaff.forEach(staffName => {
-            const li = document.createElement('li');
-            let type = 'products';
-            if (staffMembers.sales.includes(staffName)) type = 'sales';
-            else if (staffMembers.accounts.includes(staffName)) type = 'accounts';
-            li.textContent = `${staffName} (${type})`;
-            li.className = 'text-gray-700';
-            document.getElementById('hiredStaffList').appendChild(li);
-
-            if (staffButtons[staffName]) {
-                staffButtons[staffName].disabled = true;
-                staffButtons[staffName].textContent = 'Hired';
-                staffButtons[staffName].classList.add('bg-gray-400', 'cursor-not-allowed');
-            }
-        });
-        
-        for (const name in staffButtons) {
-            if (name !== 'Azret') {
-                staffButtons[name].style.display = 'none';
-            }
-        }
-        checkUnlocks();
-        updateStaffButtonPrices();
-    }
-
-    function recalculateLeadChance() {
-        const base = 0.01;
-        const betterFormsBonus = upgrades.betterLeadForms.level * upgrades.betterLeadForms.chanceIncrease;
-        const emailSubjectBonus = 0.01 * salesStaffCount * upgrades.betterEmailSubject.level;
-        leadGenerationChance = base + betterFormsBonus + emailSubjectBonus;
-        renderSalesUpgrades();
-    }
-
-    // --- UPGRADE LOGIC ---
-    function buyUpgrade(upgradeKey) {
-        const upgrade = upgrades[upgradeKey];
-        if (money < upgrade.cost) {
-            alert("Not enough money!");
-            return false;
-        }
-        money -= upgrade.cost;
-        return true;
-    }
-
-    function buyBetterLeadForms() {
-        if (!buyUpgrade('betterLeadForms')) return;
-        upgrades.betterLeadForms.level++;
-        upgrades.betterLeadForms.cost *= upgrades.betterLeadForms.costMultiplier;
-        recalculateLeadChance();
-        updateGlobalStats();
-    }
-
-    function buyReferralProgram() {
-        if (!buyUpgrade('referralProgram')) return;
-        upgrades.referralProgram.level++;
-        upgrades.referralProgram.cost *= upgrades.referralProgram.costMultiplier;
-        renderSalesUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyAggressiveFollowup() {
-        if (!buyUpgrade('aggressiveFollowup')) return;
-        upgrades.aggressiveFollowup.level++;
-        upgrades.aggressiveFollowup.cost *= upgrades.aggressiveFollowup.costMultiplier;
-        upgrades.aggressiveFollowup.chance += 0.05;
-        renderSalesUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyLeadMagnet() {
-        if (!buyUpgrade('leadMagnet')) return;
-        upgrades.leadMagnet.level++;
-        upgrades.leadMagnet.cost *= upgrades.leadMagnet.costMultiplier;
-        upgrades.leadMagnet.multiplier *= 2;
-        renderSalesUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyBetterEmailSubject() {
-        if (!buyUpgrade('betterEmailSubject')) return;
-        upgrades.betterEmailSubject.level++;
-        upgrades.betterEmailSubject.cost *= upgrades.betterEmailSubject.costMultiplier;
-        recalculateLeadChance();
-        updateGlobalStats();
-    }
-    
-    function buyAsiyasHelp() {
-        if (clicksToDevelopLead <= 10) { alert("Maxed out!"); return; }
-        if (!buyUpgrade('asiyasHelp')) return;
-        upgrades.asiyasHelp.level++;
-        upgrades.asiyasHelp.cost *= upgrades.asiyasHelp.costMultiplier;
-        clicksToDevelopLead -= upgrades.asiyasHelp.clicksReduction;
-        if (clicksToDevelopLead < 10) clicksToDevelopLead = 10;
-        renderAccountsUpgrades();
-        updateGlobalStats();
-    }
-
-    function buySecondMonitor() {
-        if (upgrades.secondMonitor.purchased) return;
-        if (!buyUpgrade('secondMonitor')) return;
-        upgrades.secondMonitor.purchased = true;
-        renderAccountsUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyNewAdNetworks() {
-        if (!buyUpgrade('newAdNetworks')) return;
-        upgrades.newAdNetworks.level++;
-        upgrades.newAdNetworks.cost *= upgrades.newAdNetworks.costMultiplier;
-        incomePerLead += upgrades.newAdNetworks.incomeBonus;
-        renderAccountsUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyBackgroundMusic() {
-        if (!buyUpgrade('backgroundMusic')) return;
-        upgrades.backgroundMusic.level++;
-        upgrades.backgroundMusic.cost *= upgrades.backgroundMusic.costMultiplier;
-        renderAccountsUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyCpmOptimization() {
-        if (!buyUpgrade('cpmOptimization')) return;
-        upgrades.cpmOptimization.level++;
-        upgrades.cpmOptimization.cost *= upgrades.cpmOptimization.costMultiplier;
-        upgrades.cpmOptimization.chance += 0.2;
-        if (upgrades.cpmOptimization.chance > 1) upgrades.cpmOptimization.chance = 1;
-        renderAccountsUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyNytPuzzles() {
-        if (upgrades.nytPuzzles.purchased) return;
-        if (!buyUpgrade('nytPuzzles')) return;
-        upgrades.nytPuzzles.purchased = true;
-        upgrades.betterLeadForms.chanceIncrease *= upgrades.nytPuzzles.multiplier;
-        upgrades.asiyasHelp.clicksReduction = Math.round(upgrades.asiyasHelp.clicksReduction * upgrades.nytPuzzles.multiplier);
-        recalculateLeadChance();
-        renderAccountsUpgrades();
-        renderGlobalUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyCorporateCulture() {
-        if (upgrades.corporateCulture.purchased) return;
-        if (!buyUpgrade('corporateCulture')) return;
-        upgrades.corporateCulture.purchased = true;
-        renderGlobalUpgrades();
-        updateGlobalStats();
-    }
-
-    function buySycGlobal() {
-        if (upgrades.sycGlobal.purchased) return;
-        if (!buyUpgrade('sycGlobal')) return;
-        upgrades.sycGlobal.purchased = true;
-        renderGlobalUpgrades();
-        updateGlobalStats();
-    }
-
-    function buyAmirsAutomation() {
-        if (upgrades.amirsAutomation.purchased) return;
-        if (!buyUpgrade('amirsAutomation')) return;
-        upgrades.amirsAutomation.purchased = true;
-        renderGlobalUpgrades();
-        updateGlobalStats();
-    }
-
-    function applyCoffeeMachineListeners() {
-        const genLeadBtn = document.getElementById('generateLeadBtn');
-        const devLeadBtn = document.getElementById('developLeadBtn');
-
-        genLeadBtn.onmousedown = () => startHold(() => tryGenerateLead(true));
-        genLeadBtn.onmouseup = stopHold;
-        genLeadBtn.onmouseleave = stopHold;
-        genLeadBtn.ontouchstart = (e) => { e.preventDefault(); startHold(() => tryGenerateLead(true)); };
-        genLeadBtn.ontouchend = stopHold;
-
-        devLeadBtn.onmousedown = () => startHold(() => developLead(true));
-        devLeadBtn.onmouseup = stopHold;
-        devLeadBtn.onmouseleave = stopHold;
-        devLeadBtn.ontouchstart = (e) => { e.preventDefault(); startHold(() => developLead(true)); };
-        devLeadBtn.ontouchend = stopHold;
-    }
-
-    function buyCoffeeMachine() {
-        if (upgrades.coffeeMachine.purchased) return;
-        if (!buyUpgrade('coffeeMachine')) return;
-        upgrades.coffeeMachine.purchased = true;
-        applyCoffeeMachineListeners();
-        renderGlobalUpgrades();
-        updateGlobalStats();
-    }
-
-    function startHold(action) {
-        if (holdInterval) clearInterval(holdInterval);
-        action();
-        holdInterval = setInterval(action, 100);
-    }
-
-    function stopHold() {
-        clearInterval(holdInterval);
-    }
-    
-    // --- ACHIEVEMENT LOGIC ---
-    function checkAchievements() {
-        for (const key in achievements) {
-            const ach = achievements[key];
-            if (!ach.unlocked && ach.condition()) {
-                ach.unlocked = true;
-                showAchievementPopup(ach);
-                renderAchievements();
-            }
-        }
-    }
-
-    function showAchievementPopup(achievement) {
-        const popup = document.getElementById('achievement-popup');
-        document.getElementById('achievement-title').textContent = achievement.name;
-        document.getElementById('achievement-desc').textContent = achievement.description;
-        
-        popup.classList.remove('opacity-0', 'translate-y-10');
-        popup.classList.add('opacity-100', 'translate-y-0');
-
-        setTimeout(() => {
-            popup.classList.remove('opacity-100', 'translate-y-0');
-            popup.classList.add('opacity-0', 'translate-y-10');
-        }, 4000);
-    }
-
-    function renderAchievements() {
-        const container = document.getElementById('achievementsList');
-        container.innerHTML = '';
-        for (const key in achievements) {
-            const ach = achievements[key];
-            const item = document.createElement('div');
-            item.className = 'p-4 rounded-lg shadow-sm';
-            if (ach.unlocked) {
-                item.classList.add('bg-yellow-100', 'border', 'border-yellow-400');
-                item.innerHTML = `<h4 class="font-bold text-yellow-800">${ach.name}</h4><p class="text-sm text-yellow-700">${ach.description}</p>`;
-            } else {
-                item.classList.add('bg-gray-200');
-                item.innerHTML = `<h4 class="font-bold text-gray-500">Locked Achievement</h4><p class="text-sm text-gray-400">???</p>`;
-            }
-            container.appendChild(item);
-        }
-    }
-    
-    // --- EVENT SYSTEM LOGIC ---
-    const events = {
-        viralMarketing: { 
-            title: "Viral Marketing Campaign", 
-            description: (name) => `${name}’s latest email campaign went viral on social media! The leads are pouring in.`,
-            effectDescription: "For the next 60 seconds, every lead generation action produces 5x the normal amount of leads.",
-            duration: 60,
-            type: 'good'
-        },
-        bullMarket: {
-            title: "Bull Market",
-            description: () => "The market is hot! Advertisers are paying a premium for ad space.",
-            effectDescription: "All income from developing leads is doubled for the next 90 seconds.",
-            duration: 90,
-            type: 'good'
-        },
-        productivityGuru: {
-            title: "Productivity Guru Visits",
-            description: () => "A famous инфоцыган visited the office and motivated the team!",
-            effectDescription: "All staff members work 50% faster for the next 3 minutes.",
-            duration: 180,
-            type: 'good'
-        },
-        foundInvoice: {
-            title: "Found an Old Invoice",
-            description: (name) => `While cleaning out a filing cabinet, ${name} found an old, unpaid invoice from a client.`,
-            effectDescription: "Instantly gain a lump sum of money equal to 10% of your current balance.",
-            duration: 0,
-            type: 'good'
-        },
-        abTest: {
-            title: "Successful A/B Test",
-            description: (name) => `${name} ran an A/B test on a new ad format, and it's a huge success!`,
-            effectDescription: "The base income per lead is temporarily increased by +$0.50 for the next 2 minutes.",
-            duration: 120,
-            type: 'good'
-        },
-        serverCrash: {
-            title: "Server Crash!",
-            description: () => "Oh no! Reports has crashed, halting all operations.",
-            type: 'choice',
-            choices: [
-                { text: "Pay $500", action: () => { if(money >= 500) money -= 500; else activeEvent.timeLeft = 0; } },
-                { text: "Wait 60s", action: () => { activeEvent.duration = 60; activeEvent.timeLeft = 60; updateActiveEventTimer(); } }
-            ]
-        },
-        adNetworkOutage: {
-            title: "Ad Network Outage",
-            description: () => "One of your biggest ad networks is experiencing a global outage.",
-            effectDescription: "The money earned per lead is halved for the next 90 seconds.",
-            duration: 90,
-            type: 'bad'
-        },
-        teamBurnout: {
-            title: "Team Burnout",
-            description: (name) => `${name} is feeling overworked and exhausted after a long week.`,
-            effectDescription: "All staff members work 25% slower for the next 3 minutes.",
-            duration: 180,
-            type: 'bad'
-        },
-        officeExpense: {
-            title: "Unexpected Office Expense",
-            description: () => "The water cooler broke down and needs an immediate, expensive repair!",
-            effectDescription: "Instantly lose 5% of your current money.",
-            duration: 0,
-            type: 'bad'
-        },
-        negativePR: {
-            title: "Negative PR",
-            description: () => "A competitor published a negative article about your company, hurting your reputation.",
-            effectDescription: "Your chance to generate a lead is reduced by 50% for the next 2 minutes.",
-            duration: 120,
-            type: 'bad'
-        }
-    };
-
-    function triggerRandomEvent() {
-        const eventKeys = Object.keys(events);
+    // --- Event System ---
+    triggerRandomEvent() {
+        if (this.hiredStaff.size === 0) return;
+        const eventKeys = Object.keys(eventData).filter(k => eventData[k].type !== 'bad' || this.hiredStaff.size > 2);
         const randomKey = eventKeys[Math.floor(Math.random() * eventKeys.length)];
-        const event = events[randomKey];
+        const event = eventData[randomKey];
         
         let description = event.description();
-        if (randomKey === 'viralMarketing' || randomKey === 'teamBurnout') {
-            const salesStaff = [...hiredStaff].filter(s => staffMembers.sales.includes(s));
-            description = salesStaff.length > 0 ? event.description(salesStaff[Math.floor(Math.random() * salesStaff.length)]) : event.description("Someone");
+        if (['viralMarketing', 'teamBurnout'].includes(randomKey)) {
+            const staff = [...this.hiredStaff].filter(s => staffData.sales.members.includes(s));
+            description = staff.length > 0 ? event.description(staff[Math.floor(Math.random() * staff.length)]) : event.description("Someone");
         }
-        if (randomKey === 'foundInvoice' || randomKey === 'abTest') {
-             const accountStaff = [...hiredStaff].filter(s => staffMembers.accounts.includes(s));
-             description = accountStaff.length > 0 ? event.description(accountStaff[Math.floor(Math.random() * accountStaff.length)]) : event.description("Someone");
+        if (['foundInvoice', 'abTest'].includes(randomKey)) {
+            const staff = [...this.hiredStaff].filter(s => staffData.accounts.members.includes(s));
+            description = staff.length > 0 ? event.description(staff[Math.floor(Math.random() * staff.length)]) : event.description("Someone");
         }
 
-        document.getElementById('event-title').textContent = event.title;
-        document.getElementById('event-description').textContent = description;
-        const choicesContainer = document.getElementById('event-choices');
-        choicesContainer.innerHTML = '';
+        DOM.eventModal.title.textContent = event.title;
+        DOM.eventModal.description.textContent = description;
+        DOM.eventModal.choices.innerHTML = '';
 
         if (event.type === 'choice') {
             event.choices.forEach(choice => {
@@ -875,297 +850,239 @@
                 button.textContent = choice.text;
                 button.className = 'px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400';
                 button.onclick = () => {
-                    choice.action();
-                    document.getElementById('event-modal').classList.add('hidden');
+                    choice.action(this);
+                    DOM.eventModal.el.classList.add('hidden');
                 };
-                choicesContainer.appendChild(button);
+                DOM.eventModal.choices.appendChild(button);
             });
         } else {
-             const okButton = document.createElement('button');
-             okButton.textContent = "Okay";
-             okButton.className = 'px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600';
-             okButton.onclick = () => {
-                startEvent(randomKey);
-                document.getElementById('event-modal').classList.add('hidden');
-             };
-             choicesContainer.appendChild(okButton);
+            const okButton = document.createElement('button');
+            okButton.textContent = "Okay";
+            okButton.className = 'px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600';
+            okButton.onclick = () => {
+                this.startEvent(randomKey);
+                DOM.eventModal.el.classList.add('hidden');
+            };
+            DOM.eventModal.choices.appendChild(okButton);
         }
         
-        document.getElementById('event-modal').classList.remove('hidden');
-        eventCooldown = 180 + Math.random() * 120; // Reset cooldown to 3-5 minutes
+        DOM.eventModal.el.classList.remove('hidden');
+        this.eventCooldown = 180 + Math.random() * 120; // 3-5 minutes
     }
-    
-    function startEvent(key) {
-        const event = events[key];
+
+    startEvent(key) {
+        const event = eventData[key];
+        if (event.onStart) event.onStart(this);
+        
         if (event.duration > 0) {
-            activeEvent = { key: key, timeLeft: event.duration, duration: event.duration };
-            updateActiveEventTimer();
-            document.getElementById('active-event-timer').classList.remove('hidden');
+            this.activeEvent = { key: key, timeLeft: event.duration };
+            this.updateActiveEventTimer();
+            DOM.activeEventTimer.el.classList.remove('hidden');
+            this.restartIntervals(); // Restart to apply speed changes
         } else {
-            // Instant effect events
-            if (key === 'foundInvoice') money += money * 0.10;
-            if (key === 'officeExpense') money *= 0.95;
+            // Instant effects
+            if (key === 'foundInvoice') this.money += this.money * 0.10;
+            if (key === 'officeExpense') this.money *= 0.95;
         }
     }
 
-    function endEvent(key) {
-        activeEvent = null;
-        document.getElementById('active-event-timer').classList.add('hidden');
+    endEvent() {
+        if (!this.activeEvent) return;
+        const event = eventData[this.activeEvent.key];
+        if (event.onEnd) event.onEnd(this);
+        this.activeEvent = null;
+        DOM.activeEventTimer.el.classList.add('hidden');
+        this.restartIntervals(); // Restart to remove speed changes
     }
 
-    function updateActiveEventTimer() {
-        if (!activeEvent) return;
-        const timerEl = document.getElementById('active-event-timer');
-        const titleEl = document.getElementById('active-event-title');
-        const timeLeftEl = document.getElementById('active-event-time-left');
-        
-        const event = events[activeEvent.key];
-        titleEl.textContent = event.title;
-        
-        const minutes = Math.floor(activeEvent.timeLeft / 60);
-        const seconds = (activeEvent.timeLeft % 60).toString().padStart(2, '0');
-        timeLeftEl.textContent = `${minutes}:${seconds}`;
-    }
-
-    function showEventDetails() {
-        if (!activeEvent) return;
-        const event = events[activeEvent.key];
-        document.getElementById('event-details-title').textContent = event.title;
-        document.getElementById('event-details-description').textContent = event.effectDescription;
-        document.getElementById('event-details-modal').classList.remove('hidden');
+    updateActiveEventTimer() {
+        if (!this.activeEvent) return;
+        const event = eventData[this.activeEvent.key];
+        DOM.activeEventTimer.title.textContent = event.title;
+        const minutes = Math.floor(this.activeEvent.timeLeft / 60);
+        const seconds = (this.activeEvent.timeLeft % 60).toString().padStart(2, '0');
+        DOM.activeEventTimer.timeLeft.textContent = `${minutes}:${seconds}`;
     }
     
-    // --- RENDER UPGRADES & STATS ---
-    function createUpgradeElement(details) {
-        const item = document.createElement('div');
-        item.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex justify-between items-center';
-        item.innerHTML = `
-            <div>
-              <h4 class="font-bold text-lg">${details.name} ${details.level !== undefined ? `<span class="text-sm font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">${details.level}</span>` : ''}</h4>
-              ${details.desc.map(d => `<p class="text-sm text-gray-600">${d}</p>`).join('')}
-            </div>
-            <div class="text-right flex-shrink-0 ml-4">
-              <button class="px-4 py-2 rounded-md ${details.buttonClass} text-white font-semibold ${details.buttonHover}">Buy</button>
-              <p class="text-sm font-semibold mt-1">Cost: $${details.cost.toFixed(2)}</p>
-            </div>
-        `;
-        const button = item.querySelector('button');
-        button.onclick = details.onclick;
-        if (details.isMaxed || details.isPurchased) {
-            button.disabled = true;
-            button.textContent = details.isPurchased ? 'Purchased' : 'Maxed';
-            button.className = 'px-4 py-2 rounded-md bg-gray-400 cursor-not-allowed text-white font-semibold';
+    showEventDetails() {
+        if (!this.activeEvent) return;
+        const event = eventData[this.activeEvent.key];
+        DOM.eventDetailsModal.title.textContent = event.title;
+        DOM.eventDetailsModal.description.textContent = event.effectDescription;
+        DOM.eventDetailsModal.el.classList.remove('hidden');
+    }
+
+    // --- Game Loop & Intervals ---
+    mainLoop() {
+        let incomeThisTick = this.incomeRate;
+        if (this.activeEvent && this.activeEvent.key === 'serverCrashPenalty') {
+            incomeThisTick = 0;
         }
-        return item;
-    }
+        this.money += incomeThisTick;
+        this.stats.totalMoneyEarned += incomeThisTick;
 
-    function renderSalesUpgrades() {
-      const container = document.getElementById('salesUpgradesList');
-      container.innerHTML = '';
-      
-      container.appendChild(createUpgradeElement({
-          name: 'Better Lead Forms', level: upgrades.betterLeadForms.level,
-          desc: [`Increases manual lead generation chance by ${(upgrades.betterLeadForms.chanceIncrease * 100).toFixed(2)}pp.`, `Current total chance: ${(leadGenerationChance * 100).toFixed(2)}%`],
-          cost: upgrades.betterLeadForms.cost, onclick: buyBetterLeadForms, buttonClass: 'bg-green-500', buttonHover: 'hover:bg-green-600'
-      }));
-      container.appendChild(createUpgradeElement({
-          name: 'Lead Magnet', level: upgrades.leadMagnet.level,
-          desc: [`Manual clicks generate ${upgrades.leadMagnet.multiplier}x leads.`],
-          cost: upgrades.leadMagnet.cost, onclick: buyLeadMagnet, buttonClass: 'bg-green-500', buttonHover: 'hover:bg-green-600'
-      }));
-      container.appendChild(createUpgradeElement({
-          name: 'Better Email Subject', level: upgrades.betterEmailSubject.level,
-          desc: [`+1% bonus lead chance per Sales staff.`],
-          cost: upgrades.betterEmailSubject.cost, onclick: buyBetterEmailSubject, buttonClass: 'bg-green-500', buttonHover: 'hover:bg-green-600'
-      }));
-      container.appendChild(createUpgradeElement({
-          name: 'Referral Program', level: upgrades.referralProgram.level,
-          desc: [`Passively generate ${upgrades.referralProgram.level} lead(s) every 10 seconds.`],
-          cost: upgrades.referralProgram.cost, onclick: buyReferralProgram, buttonClass: 'bg-green-500', buttonHover: 'hover:bg-green-600'
-      }));
-      container.appendChild(createUpgradeElement({
-          name: 'Aggressive Followup', level: upgrades.aggressiveFollowup.level,
-          desc: [`+5% chance per click to instantly develop a lead.`, `Current chance: ${(upgrades.aggressiveFollowup.chance * 100).toFixed(0)}%`],
-          cost: upgrades.aggressiveFollowup.cost, onclick: buyAggressiveFollowup, buttonClass: 'bg-green-500', buttonHover: 'hover:bg-green-600'
-      }));
-    }
-
-    function renderAccountsUpgrades() {
-        const container = document.getElementById('accountsUpgradesList');
-        container.innerHTML = '';
-
-        container.appendChild(createUpgradeElement({
-            name: 'Asiya’s Help', level: upgrades.asiyasHelp.level,
-            desc: [`Reduces clicks needed to develop a lead by ${upgrades.asiyasHelp.clicksReduction}.`, `Current clicks needed: ${clicksToDevelopLead}`],
-            cost: upgrades.asiyasHelp.cost, onclick: buyAsiyasHelp, buttonClass: 'bg-indigo-500', buttonHover: 'hover:bg-indigo-600', isMaxed: clicksToDevelopLead <= 10
-        }));
-        container.appendChild(createUpgradeElement({
-            name: '2nd Monitor',
-            desc: [`Each manual click on "Develop Lead" counts as two.`],
-            cost: upgrades.secondMonitor.cost, onclick: buySecondMonitor, buttonClass: 'bg-indigo-500', buttonHover: 'hover:bg-indigo-600', isPurchased: upgrades.secondMonitor.purchased
-        }));
-        container.appendChild(createUpgradeElement({
-            name: 'New Ad Networks', level: upgrades.newAdNetworks.level,
-            desc: [`Each developed lead earns +$${upgrades.newAdNetworks.incomeBonus.toFixed(2)} more.`, `Current income per lead: $${incomePerLead.toFixed(2)}`],
-            cost: upgrades.newAdNetworks.cost, onclick: buyNewAdNetworks, buttonClass: 'bg-indigo-500', buttonHover: 'hover:bg-indigo-600'
-        }));
-        container.appendChild(createUpgradeElement({
-            name: 'Background Music', level: upgrades.backgroundMusic.level,
-            desc: [`+${upgrades.backgroundMusic.level} click/sec to each Accounts staff.`],
-            cost: upgrades.backgroundMusic.cost, onclick: buyBackgroundMusic, buttonClass: 'bg-indigo-500', buttonHover: 'hover:bg-indigo-600'
-        }));
-        container.appendChild(createUpgradeElement({
-            name: 'CPM Optimization', level: upgrades.cpmOptimization.level,
-            desc: [`${(upgrades.cpmOptimization.chance * 100).toFixed(0)}% chance to double money from a lead.`],
-            cost: upgrades.cpmOptimization.cost, onclick: buyCpmOptimization, buttonClass: 'bg-indigo-500', buttonHover: 'hover:bg-indigo-600', isMaxed: upgrades.cpmOptimization.chance >= 1
-        }));
-    }
-    
-    function renderGlobalUpgrades() {
-        const container = document.getElementById('globalUpgradesList');
-        container.innerHTML = '';
-
-        container.appendChild(createUpgradeElement({
-            name: 'NYT Puzzles',
-            desc: [`Boosts Sales/Account upgrade effectiveness by x${upgrades.nytPuzzles.multiplier}.`, `One-time purchase.`],
-            cost: upgrades.nytPuzzles.cost, onclick: buyNytPuzzles, buttonClass: 'bg-purple-500', buttonHover: 'hover:bg-purple-600', isPurchased: upgrades.nytPuzzles.purchased
-        }));
-        container.appendChild(createUpgradeElement({
-            name: 'Corporate Culture',
-            desc: [`All manual clicks count as two.`, `One-time purchase.`],
-            cost: upgrades.corporateCulture.cost, onclick: buyCorporateCulture, buttonClass: 'bg-purple-500', buttonHover: 'hover:bg-purple-600', isPurchased: upgrades.corporateCulture.purchased
-        }));
-        container.appendChild(createUpgradeElement({
-            name: 'СУЦ',
-            desc: [`All income from developing leads is increased by 20%.`, `One-time purchase.`],
-            cost: upgrades.sycGlobal.cost, onclick: buySycGlobal, buttonClass: 'bg-purple-500', buttonHover: 'hover:bg-purple-600', isPurchased: upgrades.sycGlobal.purchased
-        }));
-        container.appendChild(createUpgradeElement({
-            name: 'Amir’s Automation',
-            desc: [`Automated staff work twice as fast.`, `One-time purchase.`],
-            cost: upgrades.amirsAutomation.cost, onclick: buyAmirsAutomation, buttonClass: 'bg-purple-500', buttonHover: 'hover:bg-purple-600', isPurchased: upgrades.amirsAutomation.purchased
-        }));
-        container.appendChild(createUpgradeElement({
-            name: 'Coffee Machine',
-            desc: [`Allows holding down the mouse button to click rapidly.`, `One-time purchase.`],
-            cost: upgrades.coffeeMachine.cost, onclick: buyCoffeeMachine, buttonClass: 'bg-purple-500', buttonHover: 'hover:bg-purple-600', isPurchased: upgrades.coffeeMachine.purchased
-        }));
-    }
-
-    function renderStatistics() {
-        const container = document.getElementById('statisticsList');
-        container.innerHTML = '';
-
-        const createStat = (label, value) => {
-            const statDiv = document.createElement('div');
-            statDiv.className = 'bg-gray-200 p-3 rounded-lg';
-            statDiv.innerHTML = `<span class="font-semibold">${label}:</span> ${value}`;
-            container.appendChild(statDiv);
-        };
-
-        const formatTime = (seconds) => {
-            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-            return `${h}:${m}:${s}`;
-        };
-
-        createStat('Total Money Earned', `$${totalMoneyEarned.toFixed(2)}`);
-        createStat('Total Leads Generated', gameStats.totalLeadsGenerated);
-        createStat('Manual Clicks', gameStats.totalManualClicks);
-        createStat('Play Time', formatTime(gameStats.playTime));
-    }
-
-    // --- INITIALIZE GAME ---
-    function initialize() {
-        loadGame();
-
-        createAllStaffButtons();
-        updateFullStaffUI();
-        
-        recalculateLeadChance();
-        renderAccountsUpgrades();
-        renderGlobalUpgrades();
-        renderAchievements();
-        
-        staffIntervals.forEach(clearInterval);
-        hiredStaff.forEach(staffName => {
-            if (staffMembers.sales.includes(staffName)) staffIntervals.push(setInterval(() => tryGenerateLead(false), 500));
-            if (staffMembers.accounts.includes(staffName)) staffIntervals.push(setInterval(() => developLead(false), 500));
-        });
-        if (upgrades.referralProgram.level > 0) {
-            staffIntervals.push(setInterval(() => { leads += upgrades.referralProgram.level; updateGlobalStats(); }, 10000));
+        if (this.activeEvent) {
+            this.activeEvent.timeLeft--;
+            this.updateActiveEventTimer();
+            if (this.activeEvent.timeLeft <= 0) {
+                this.endEvent();
+            }
+        } else if (this.hiredStaff.size > 0) {
+            this.eventCooldown--;
+            if (this.eventCooldown <= 0) {
+                this.triggerRandomEvent();
+            }
         }
-        if (upgrades.backgroundMusic.level > 0) {
-            staffIntervals.push(setInterval(() => {
-                const clicks = accountStaffCount * upgrades.backgroundMusic.level;
-                for(let i=0; i<clicks; i++) developLead(false);
+        
+        this.stats.playTime++;
+        this.checkAchievements();
+        this.renderAll();
+        this.save();
+    }
+
+    restartIntervals() {
+        this.activeIntervals.forEach(clearInterval);
+        this.activeIntervals = [];
+
+        let staffSpeed = 500 / (this.upgrades.amirsAutomation.purchased ? 2 : 1);
+        if (this.activeEvent) {
+            if (this.activeEvent.key === 'productivityGuru') staffSpeed *= 0.5;
+            if (this.activeEvent.key === 'teamBurnout') staffSpeed *= 1.25;
+        }
+        
+        const salesStaffCount = this.getStaffCount('sales');
+        for (let i = 0; i < salesStaffCount; i++) {
+            this.activeIntervals.push(setInterval(() => this.tryGenerateLead(false), staffSpeed));
+        }
+        
+        const accountsStaffCount = this.getStaffCount('accounts');
+        for (let i = 0; i < accountsStaffCount; i++) {
+            this.activeIntervals.push(setInterval(() => this.developLead(false), staffSpeed));
+        }
+
+        if (this.upgrades.referralProgram.level > 0) {
+            this.activeIntervals.push(setInterval(() => { this.leads += this.upgrades.referralProgram.level; }, 10000));
+        }
+        if (this.upgrades.backgroundMusic.level > 0) {
+            this.activeIntervals.push(setInterval(() => {
+                const clicks = this.getStaffCount('accounts') * this.upgrades.backgroundMusic.level;
+                for (let i = 0; i < clicks; i++) this.developLead(false);
             }, 1000));
         }
+    }
+    
+    getStaffCount(type) {
+        let count = 0;
+        this.hiredStaff.forEach(name => {
+            if (staffData[type].members.includes(name)) {
+                count++;
+            }
+        });
+        return count;
+    }
 
-        if (upgrades.coffeeMachine.purchased) {
-            applyCoffeeMachineListeners();
-        }
+    // --- Event Listeners ---
+    setupEventListeners() {
+        DOM.navButtons.addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON') {
+                this.showScreen(e.target.dataset.screen);
+            }
+        });
 
-        gameLoopInterval = setInterval(gameLoop, 1000);
-        
-        updateGlobalStats();
+        DOM.generateLeadBtn.addEventListener('click', () => this.tryGenerateLead(true));
+        DOM.developLeadBtn.addEventListener('click', () => this.developLead(true));
         
         document.addEventListener('keydown', (event) => {
             const activeScreen = document.querySelector('.screen.active');
             if (!activeScreen) return;
             switch (activeScreen.id) {
-                case 'salesScreen': tryGenerateLead(); break;
-                case 'accountScreen': developLead(); break;
+                case 'salesScreen':
+                    this.tryGenerateLead(true);
+                    break;
+                case 'accountScreen':
+                    this.developLead(true);
+                    break;
             }
         });
 
-        document.getElementById('resetProgressBtn').onclick = resetGame;
-        document.getElementById('manualSaveBtn').onclick = () => {
-            saveGame();
-            const btn = document.getElementById('manualSaveBtn');
-            const originalText = btn.textContent;
-            btn.textContent = 'Saved!';
-            setTimeout(() => { btn.textContent = originalText; }, 1500);
-        };
-        document.getElementById('close-welcome-modal').onclick = () => {
-            document.getElementById('welcome-back-modal').classList.add('hidden');
-        };
-        document.getElementById('close-event-modal').onclick = () => {
-            document.getElementById('event-modal').classList.add('hidden');
-        };
-        document.getElementById('close-event-details-modal').onclick = () => {
-            document.getElementById('event-details-modal').classList.add('hidden');
-        };
-        const timer = document.getElementById('active-event-timer');
-        timer.onmouseover = showEventDetails;
-        timer.onclick = showEventDetails;
-    }
+        DOM.staffForHire.addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON' && e.target.dataset.name) {
+                this.hireStaff(e.target.dataset.type, e.target.dataset.name);
+            }
+        });
 
-    function gameLoop() {
-        const incomeThisTick = passiveIncome;
-        money += incomeThisTick;
-        totalMoneyEarned += incomeThisTick;
+        DOM.upgradesContainer.addEventListener('click', e => {
+            const button = e.target.closest('button[data-upgrade]');
+            if (button) {
+                const upgradeKey = button.dataset.upgrade;
+                const categoryKey = button.closest('[data-category]').dataset.category;
+                this.buyUpgrade(categoryKey, upgradeKey);
+            }
+        });
+
+        DOM.manualSaveBtn.addEventListener('click', () => {
+            this.save();
+            const originalText = DOM.manualSaveBtn.textContent;
+            DOM.manualSaveBtn.textContent = 'Saved!';
+            setTimeout(() => { DOM.manualSaveBtn.textContent = originalText; }, 1500);
+        });
+        DOM.resetProgressBtn.addEventListener('click', () => this.reset());
         
-        gameStats.playTime++;
-        renderStatistics();
+        DOM.welcomeModal.closeBtn.addEventListener('click', () => DOM.welcomeModal.el.classList.add('hidden'));
+        DOM.eventModal.closeBtn.addEventListener('click', () => DOM.eventModal.el.classList.add('hidden'));
+        DOM.eventDetailsModal.closeBtn.addEventListener('click', () => DOM.eventDetailsModal.el.classList.add('hidden'));
+        
+        const timer = DOM.activeEventTimer.el;
+        timer.onmouseover = () => this.showEventDetails();
+        timer.onclick = () => this.showEventDetails();
+    }
+    
+    applyCoffeeMachineListeners() {
+        const setupHold = (btn, action) => {
+            const startHold = (e) => {
+                e.preventDefault();
+                if (this.holdInterval) clearInterval(this.holdInterval);
+                action();
+                this.holdInterval = setInterval(action, 100);
+            };
+            const stopHold = () => clearInterval(this.holdInterval);
 
-        if (activeEvent) {
-            activeEvent.timeLeft--;
-            updateActiveEventTimer();
-            if (activeEvent.timeLeft <= 0) {
-                endEvent(activeEvent.key);
-            }
-        } else {
-            eventCooldown--;
-            if (eventCooldown <= 0) {
-                triggerRandomEvent();
-            }
-        }
-        updateGlobalStats();
+            btn.onmousedown = startHold;
+            btn.onmouseup = stopHold;
+            btn.onmouseleave = stopHold;
+            btn.ontouchstart = startHold;
+            btn.ontouchend = stopHold;
+        };
+        setupHold(DOM.generateLeadBtn, () => this.tryGenerateLead(true));
+        setupHold(DOM.developLeadBtn, () => this.developLead(true));
     }
 
-    window.onload = initialize;
-  </script>
+    showScreen(id) {
+        DOM.screens.forEach(screen => screen.classList.toggle('active', screen.id === id));
+        DOM.navButtons.querySelectorAll('button').forEach(btn => {
+            const isActive = btn.dataset.screen === id;
+            btn.classList.toggle('bg-blue-500', isActive);
+            btn.classList.toggle('text-white', isActive);
+            btn.classList.toggle('bg-gray-200', !isActive);
+            btn.classList.toggle('text-gray-700', !isActive);
+        });
+    }
+
+    start() {
+        this.setupEventListeners();
+        if (this.upgrades.coffeeMachine.purchased) {
+            this.applyCoffeeMachineListeners();
+        }
+        this.restartIntervals();
+        this.renderAll();
+        setInterval(() => this.mainLoop(), 1000);
+    }
+}
+
+window.onload = () => {
+    const game = new MonetizationGame();
+    game.start();
+};
+</script>
 </body>
 </html>
