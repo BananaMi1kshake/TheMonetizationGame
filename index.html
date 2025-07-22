@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Monetization Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent; /* Disables tap highlight on mobile */
     }
     .screen {
         display: none;
@@ -67,7 +68,7 @@
     <!-- Accounts Screen -->
     <div id="accountScreen" class="screen p-4 bg-white rounded-lg shadow-md">
       <h2 class="text-2xl font-bold mb-4">Accounts Screen</h2>
-      <button id="developLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-indigo-500 text-white font-bold text-lg shadow-md hover:bg-indigo-600 transition-transform transform hover:scale-105" onclick="developLead()">Develop Code</button>
+      <button id="developLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-indigo-500 text-white font-bold text-lg shadow-md hover:bg-indigo-600 transition-transform transform hover:scale-105" onclick="developLead()">Develop Lead</button>
       <div class="w-full bg-gray-200 rounded-full h-6 mt-4 overflow-hidden shadow-inner">
         <div id="progressBar" class="bg-indigo-600 h-6 rounded-full transition-all duration-200" style="width: 0%"></div>
       </div>
