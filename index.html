@@ -243,7 +243,7 @@
         someonePromoted: { name: "Someone is getting promoted", description: "Earn $5,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 5000 },
         syc: { name: "100% СУЦ", description: "Earn $10,000 total.", unlocked: false, condition: () => totalMoneyEarned >= 10000 },
         buyMyUSDT: { name: "Buy my USDT", description: "Hire Emil.", unlocked: false, condition: () => hiredStaff.has('Emil') },
-        shapkaGang: { name: "Шапка gang", description: "Hire all staff.", unlocked: false, condition: () => hiredStaff.size === (staffMembers.sales.length + staffMembers.accounts.length + staffMembers.products.length) }
+        shapkaGang: { name: "Шапка gang", description: "Hire all staff.", unlocked: false, condition: () => hiredStaff.size === (staffMembers.sales.length + staffMembers.accounts.length + staffMembers.products.length) },
         doshyrakMoney: { name: "Doshyrak Money", description: "Reach an income rate of $1.00/s.", unlocked: false, condition: () => passiveIncome >= 1 },
         sideHustle: { name: "Side Hustle", description: "Reach an income rate of $10.00/s.", unlocked: false, condition: () => passiveIncome >= 10 },
         theOnePercent: { name: "The 1%", description: "Reach an income rate of $100.00/s.", unlocked: false, condition: () => passiveIncome >= 100 },
