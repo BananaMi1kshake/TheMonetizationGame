@@ -501,11 +501,12 @@ class MonetizationGame {
     tryGenerateLead(isManualClick = false) {
         if (isManualClick) {
             this.stats.totalManualClicks++;
-            if (this.emailCharIndex >= emailContent.length) {
-                this.emailCharIndex = 0;
-            }
-            this.emailCharIndex++;
         }
+
+        if (this.emailCharIndex >= emailContent.length) {
+            this.emailCharIndex = 0;
+        }
+        this.emailCharIndex++;
 
         const performAction = () => {
             if (Math.random() < this.getLeadChance()) {
@@ -532,17 +533,25 @@ class MonetizationGame {
     }
 
     developLead(isManualClick = false) {
-        if (this.leads <= 0 && isManualClick) return;
+        if (this.leads <= 0) {
+            if (isManualClick) { // Only advance text on manual click if no leads
+                 if (this.adCharIndex >= adScriptContent.length) {
+                    this.adCharIndex = 0;
+                }
+                this.adCharIndex++;
+                this.updateAccountScreen();
+            }
+            return;
+        }
         
         if (isManualClick) {
             this.stats.totalManualClicks++;
-            if (this.adCharIndex >= adScriptContent.length) {
-                this.adCharIndex = 0;
-            }
-            this.adCharIndex++;
         }
 
-        if (this.leads <= 0) return;
+        if (this.adCharIndex >= adScriptContent.length) {
+            this.adCharIndex = 0;
+        }
+        this.adCharIndex++;
 
         let clickMultiplier = 1;
         if (isManualClick) {
