@@ -244,7 +244,7 @@ const upgradeData = {
     sales: {
         name: 'Sales Upgrades',
         upgrades: {
-            betterLeadForms: { name: 'Better Lead Forms', desc: (g) => `Increases manual lead gen chance by ${(g.upgrades.betterLeadForms.chanceIncrease * 100).toFixed(0)}pp. Current: ${(g.getLeadChance() * 100).toFixed(2)}%`, cost: 1, costMultiplier: 5, maxLevel: 0, chanceIncrease: 0.01, onPurchase: (g) => { g.upgrades.betterLeadForms.level++; } },
+            betterLeadForms: { name: 'Better Lead Forms', desc: (g) => `Increases manual lead gen chance by ${(g.upgrades.betterLeadForms.chanceIncrease * 100).toFixed(1)}pp. Current: ${(g.getLeadChance() * 100).toFixed(2)}%`, cost: 1, costMultiplier: 5, maxLevel: 0, chanceIncrease: 0.005, onPurchase: (g) => { g.upgrades.betterLeadForms.level++; } },
             leadMagnet: { name: 'Lead Magnet', desc: (g) => `Manual clicks generate ${g.upgrades.leadMagnet.multiplier}x leads.`, cost: 50, costMultiplier: 10, maxLevel: 0, multiplier: 1, onPurchase: (g) => { g.upgrades.leadMagnet.level++; g.upgrades.leadMagnet.multiplier *= 2; } },
             betterEmailSubject: { name: 'Better Email Subject', desc: (g) => `+1% bonus lead chance per Sales staff.`, cost: 20, costMultiplier: 3, maxLevel: 0, onPurchase: (g) => { g.upgrades.betterEmailSubject.level++; } },
             referralProgram: { name: 'Referral Program', desc: (g) => `Passively generate ${g.upgrades.referralProgram.level} lead(s) every 10 seconds.`, cost: 15, costMultiplier: 3, maxLevel: 0, onPurchase: (g) => { g.upgrades.referralProgram.level++; } },
@@ -254,10 +254,10 @@ const upgradeData = {
     accounts: {
         name: 'Accounts Upgrades',
         upgrades: {
-            asiyasHelp: { name: 'Asiya’s Help', desc: (g) => `Reduces clicks needed to develop a lead by ${g.upgrades.asiyasHelp.clicksReduction}. Current: ${g.clicksToDevelopLead}`, cost: 3, costMultiplier: 5, maxLevel: 0, clicksReduction: 10, onPurchase: (g) => { g.upgrades.asiyasHelp.level++; g.clicksToDevelopLead = Math.max(10, g.clicksToDevelopLead - g.upgrades.asiyasHelp.clicksReduction); }, isMaxed: (g) => g.clicksToDevelopLead <= 10 },
+            asiyasHelp: { name: 'Asiya’s Help', desc: (g) => `Reduces clicks needed to develop a lead by ${g.upgrades.asiyasHelp.clicksReduction}. Current: ${g.clicksToDevelopLead}`, cost: 3, costMultiplier: 5, maxLevel: 0, clicksReduction: 15, onPurchase: (g) => { g.upgrades.asiyasHelp.level++; g.clicksToDevelopLead = Math.max(10, g.clicksToDevelopLead - g.upgrades.asiyasHelp.clicksReduction); }, isMaxed: (g) => g.clicksToDevelopLead <= 10 },
             secondMonitor: { name: '2nd Monitor', desc: () => `Each manual click on "Develop Lead" counts as two.`, cost: 10, oneTime: true, onPurchase: (g) => { g.upgrades.secondMonitor.purchased = true; } },
             newAdNetworks: { name: 'New Ad Networks', desc: (g) => `Each developed lead earns +$${g.upgrades.newAdNetworks.incomeBonus.toFixed(2)} more. Current: $${g.incomePerLead.toFixed(2)}`, cost: 10, costMultiplier: 2, maxLevel: 0, incomeBonus: 0.01, onPurchase: (g) => { g.upgrades.newAdNetworks.level++; g.incomePerLead += g.upgrades.newAdNetworks.incomeBonus; } },
-            backgroundMusic: { name: 'Background Music', desc: (g) => `+${g.upgrades.backgroundMusic.level} click/sec to each Accounts staff.`, cost: 100, costMultiplier: 15, maxLevel: 0, onPurchase: (g) => { g.upgrades.backgroundMusic.level++; } },
+            backgroundMusic: { name: 'Background Music', desc: (g) => `+${g.upgrades.backgroundMusic.level} click/sec to each Accounts staff.`, cost: 80, costMultiplier: 15, maxLevel: 0, onPurchase: (g) => { g.upgrades.backgroundMusic.level++; } },
             cpmOptimization: { name: 'CPM Optimization', desc: (g) => `${(g.upgrades.cpmOptimization.chance * 100).toFixed(0)}% chance to double money from a lead.`, cost: 500, costMultiplier: 3, maxLevel: 0, chance: 0, onPurchase: (g) => { g.upgrades.cpmOptimization.level++; g.upgrades.cpmOptimization.chance = Math.min(1, g.upgrades.cpmOptimization.chance + 0.2); }, isMaxed: (g) => g.upgrades.cpmOptimization.chance >= 1 },
         }
     },
@@ -519,7 +519,7 @@ class MonetizationGame {
 
     // --- Core Gameplay ---
     getLeadChance() {
-        let chance = 0.01;
+        let chance = 0.02; // Increased base chance
         chance += this.upgrades.betterLeadForms.level * this.upgrades.betterLeadForms.chanceIncrease;
         chance += 0.01 * this.getStaffCount('sales') * this.upgrades.betterEmailSubject.level;
         if (this.activeEvent && this.activeEvent.key === 'negativePR') {
@@ -1020,20 +1020,26 @@ class MonetizationGame {
         this.activeIntervals.forEach(clearInterval);
         this.activeIntervals = [];
 
-        let staffSpeed = 500 / (this.upgrades.amirsAutomation.purchased ? 2 : 1);
+        let baseSpeed = 500;
+        if (this.upgrades.amirsAutomation.purchased) {
+            baseSpeed /= 2;
+        }
         if (this.activeEvent) {
-            if (this.activeEvent.key === 'productivityGuru') staffSpeed *= 0.5;
-            if (this.activeEvent.key === 'teamBurnout') staffSpeed *= 1.25;
+            if (this.activeEvent.key === 'productivityGuru') baseSpeed *= 0.5;
+            if (this.activeEvent.key === 'teamBurnout') baseSpeed *= 1.25;
         }
         
+        const salesStaffSpeed = baseSpeed * 1.5;
+        const accountsStaffSpeed = baseSpeed;
+
         const salesStaffCount = this.getStaffCount('sales');
         for (let i = 0; i < salesStaffCount; i++) {
-            this.activeIntervals.push(setInterval(() => this.tryGenerateLead(false), staffSpeed));
+            this.activeIntervals.push(setInterval(() => this.tryGenerateLead(false), salesStaffSpeed));
         }
         
         const accountsStaffCount = this.getStaffCount('accounts');
         for (let i = 0; i < accountsStaffCount; i++) {
-            this.activeIntervals.push(setInterval(() => this.developLead(false), staffSpeed));
+            this.activeIntervals.push(setInterval(() => this.developLead(false), accountsStaffSpeed));
         }
 
         if (this.upgrades.referralProgram.level > 0) {
