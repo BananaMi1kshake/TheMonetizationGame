@@ -385,6 +385,7 @@ const eventData = {
 // --- GAME STATE & LOGIC ---
 class MonetizationGame {
     constructor() {
+        this.isProcessingClick = false;
         this.load(); // Load game state or set defaults
         this.activeIntervals = [];
         this.holdInterval = null;
@@ -462,12 +463,24 @@ class MonetizationGame {
         if (savedData) {
             try {
                 const savedState = JSON.parse(savedData);
-                const mergedState = { ...defaultState, ...savedState };
+                // Start with the default state to ensure all properties exist
+                Object.assign(this, defaultState);
+                // Overwrite with saved top-level properties
+                Object.assign(this, savedState);
 
-                Object.assign(this, mergedState);
-
+                // Perform a deep merge for nested objects to prevent issues with old saves
                 this.hiredStaff = new Set(savedState.hiredStaff || []);
-                this.upgrades = { ...defaultState.upgrades, ...savedState.upgrades };
+                
+                const defaultUpgrades = defaultState.upgrades;
+                const savedUpgrades = savedState.upgrades || {};
+                const mergedUpgrades = {};
+                for (const key in defaultUpgrades) {
+                    if (defaultUpgrades.hasOwnProperty(key)) {
+                        mergedUpgrades[key] = { ...defaultUpgrades[key], ...(savedUpgrades[key] || {}) };
+                    }
+                }
+                this.upgrades = mergedUpgrades;
+
                 this.achievements = { ...defaultState.achievements, ...savedState.achievements };
                 this.stats = { ...defaultState.stats, ...savedState.stats };
                 this.staffCosts = { ...defaultState.staffCosts, ...savedState.staffCosts };
@@ -609,42 +622,52 @@ class MonetizationGame {
     }
 
     hireStaff(type, name) {
-        const cost = this.staffCosts[type];
-        if (this.money < cost) {
-            console.log("Not enough money");
-            return;
-        }
-        this.money -= cost;
-        this.hiredStaff.add(name);
-        this.staffCosts[type] *= staffData[type].costMultiplier;
+        if (this.isProcessingClick) return;
+        this.isProcessingClick = true;
+        try {
+            const cost = this.staffCosts[type];
+            if (this.money < cost) {
+                return;
+            }
+            this.money -= cost;
+            this.hiredStaff.add(name);
+            this.staffCosts[type] *= staffData[type].costMultiplier;
 
-        if (type === 'products') {
-            this.incomeRate += 5;
-        }
+            if (type === 'products') {
+                this.incomeRate += 5;
+            }
 
-        this.restartIntervals();
-        this.renderAll();
-        this.checkAchievements();
+            this.restartIntervals();
+            this.renderAll();
+            this.checkAchievements();
+        } finally {
+            this.isProcessingClick = false;
+        }
     }
 
     buyUpgrade(categoryKey, upgradeKey) {
-        const upgradeDef = upgradeData[categoryKey].upgrades[upgradeKey];
-        const upgradeState = this.upgrades[upgradeKey];
-        const cost = upgradeDef.oneTime ? upgradeDef.cost : upgradeState.cost;
+        if (this.isProcessingClick) return;
+        this.isProcessingClick = true;
+        try {
+            const upgradeDef = upgradeData[categoryKey].upgrades[upgradeKey];
+            const upgradeState = this.upgrades[upgradeKey];
+            const cost = upgradeDef.oneTime ? upgradeDef.cost : upgradeState.cost;
 
-        if (this.money < cost) {
-            console.log("Not enough money for upgrade");
-            return;
+            if (this.money < cost) {
+                return;
+            }
+            this.money -= cost;
+            upgradeDef.onPurchase(this);
+
+            if (!upgradeDef.oneTime) {
+                upgradeState.cost *= upgradeDef.costMultiplier;
+            }
+
+            this.restartIntervals();
+            this.renderAll();
+        } finally {
+            this.isProcessingClick = false;
         }
-        this.money -= cost;
-        upgradeDef.onPurchase(this);
-
-        if (!upgradeDef.oneTime) {
-            upgradeState.cost *= upgradeDef.costMultiplier;
-        }
-
-        this.restartIntervals();
-        this.renderAll();
     }
     
     isStaffUnlocked(name) {
