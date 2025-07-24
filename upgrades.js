@@ -3,7 +3,7 @@ const upgradeData = {
     sales: {
         name: 'Sales Upgrades',
         upgrades: {
-            betterLeadForms: { name: 'Better Lead Forms', desc: (g) => `Increases manual lead gen chance by ${(g.upgrades.betterLeadForms.chanceIncrease * 100).toFixed(1)}pp. Current: ${(g.getLeadChance() * 100).toFixed(2)}%`, cost: 1, costMultiplier: 5, maxLevel: 0, chanceIncrease: 0.005, onPurchase: (g) => { g.upgrades.betterLeadForms.level++; } },
+            betterLeadForms: { name: 'Better Lead Forms', desc: (g) => `Increases manual lead gen chance by ${(g.upgrades.betterLeadForms.chanceIncrease * 100).toFixed(1)}pp. Current: ${(g.getLeadChance() * 100).toFixed(2)}%`, cost: 1, costMultiplier: 5, maxLevel: 0, chanceIncrease: 0.01, onPurchase: (g) => { g.upgrades.betterLeadForms.level++; } },
             leadMagnet: { name: 'Lead Magnet', desc: (g) => `Manual clicks generate ${g.upgrades.leadMagnet.multiplier}x leads.`, cost: 50, costMultiplier: 10, maxLevel: 0, multiplier: 1, onPurchase: (g) => { g.upgrades.leadMagnet.level++; g.upgrades.leadMagnet.multiplier *= 2; } },
             betterEmailSubject: { name: 'Better Email Subject', desc: (g) => `+1% bonus lead chance per Sales staff.`, cost: 20, costMultiplier: 3, maxLevel: 0, onPurchase: (g) => { g.upgrades.betterEmailSubject.level++; } },
             referralProgram: { name: 'Referral Program', desc: (g) => `Passively generate ${g.upgrades.referralProgram.level} lead(s) every 10 seconds.`, cost: 15, costMultiplier: 3, maxLevel: 0, onPurchase: (g) => { g.upgrades.referralProgram.level++; } },
