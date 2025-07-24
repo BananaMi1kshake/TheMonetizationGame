@@ -466,6 +466,7 @@ class MonetizationGame {
         this.updateSalesScreen();
         this.updateAccountScreen();
         this.renderStaff();
+        this.renderOfficeStaff(); // ADD THIS
         this.renderUpgrades();
         this.renderAchievements();
         this.renderStatistics();
@@ -542,6 +543,31 @@ class MonetizationGame {
             DOM.staffForHire.appendChild(categoryDiv);
         }
     }
+
+    // NEW FUNCTION TO RENDER STAFF IN OFFICE
+    renderOfficeStaff() {
+        DOM.salesOffice.innerHTML = '';
+        DOM.accountsOffice.innerHTML = '';
+
+        this.hiredStaff.forEach(name => {
+            const staffChar = document.createElement('div');
+            staffChar.className = 'staff-char';
+            staffChar.id = `staff-visual-${name}`; // Unique ID for animation
+            staffChar.innerHTML = `
+                <div class="staff-head"></div>
+                <div class="staff-body"></div>
+                <div class="staff-name">${name}</div>
+            `;
+
+            if (staffData.sales.members.includes(name)) {
+                DOM.salesOffice.appendChild(staffChar);
+            } else if (staffData.accounts.members.includes(name)) {
+                DOM.accountsOffice.appendChild(staffChar);
+            }
+            // "Products" staff like Emil won't be shown in these offices, but you could add a third office if desired.
+        });
+    }
+
 
     renderUpgrades() {
         DOM.upgradesContainer.innerHTML = '';
@@ -658,6 +684,18 @@ class MonetizationGame {
             }
         }
         if (changed) this.renderAchievements();
+    }
+    
+    // NEW function to trigger animation on a staff character
+    triggerStaffAnimation(name) {
+        const staffVisual = document.getElementById(`staff-visual-${name}`);
+        if (staffVisual) {
+            staffVisual.classList.add('is-working');
+            // Remove the class after the animation finishes to allow re-triggering
+            setTimeout(() => {
+                staffVisual.classList.remove('is-working');
+            }, 400); // Must match animation duration in CSS
+        }
     }
 
     showAchievementPopup(achievement) {
@@ -829,30 +867,39 @@ class MonetizationGame {
         this.renderAll();
         this.save();
     }
-
+    
+    // REFACTORED to create specific intervals for each staff member
     restartIntervals() {
         this.activeIntervals.forEach(clearInterval);
         this.activeIntervals = [];
 
-        const salesStaffCount = this.getStaffCount('sales');
-        const accountsStaffCount = this.getStaffCount('accounts');
-
         const effectiveSalesInterval = this.getEffectiveSalesStaffInterval();
         const effectiveAccountsInterval = this.getEffectiveAccountsStaffInterval();
 
-        // Create intervals for Sales staff
-        for (let i = 0; i < salesStaffCount; i++) {
-            if (effectiveSalesInterval > 0 && isFinite(effectiveSalesInterval)) {
-                this.activeIntervals.push(setInterval(() => this.tryGenerateLead(false), effectiveSalesInterval));
+        // Create specific intervals for each hired staff member
+        this.hiredStaff.forEach(name => {
+            // Is this a Sales member?
+            if (staffData.sales.members.includes(name)) {
+                if (effectiveSalesInterval > 0 && isFinite(effectiveSalesInterval)) {
+                    const interval = setInterval(() => {
+                        this.tryGenerateLead(false);
+                        this.triggerStaffAnimation(name);
+                    }, effectiveSalesInterval);
+                    this.activeIntervals.push(interval);
+                }
             }
-        }
-        
-        // Create intervals for Accounts staff
-        for (let i = 0; i < accountsStaffCount; i++) {
-            if (effectiveAccountsInterval > 0 && isFinite(effectiveAccountsInterval)) {
-                this.activeIntervals.push(setInterval(() => this.developLead(false), effectiveAccountsInterval));
+            // Is this an Accounts member?
+            else if (staffData.accounts.members.includes(name)) {
+                if (effectiveAccountsInterval > 0 && isFinite(effectiveAccountsInterval)) {
+                    const interval = setInterval(() => {
+                        this.developLead(false);
+                        this.triggerStaffAnimation(name);
+                    }, effectiveAccountsInterval);
+                    this.activeIntervals.push(interval);
+                }
             }
-        }
+        });
+
 
         // Existing intervals for upgrades that provide passive adds, not just speed multipliers
         if (this.upgrades.referralProgram.level > 0) {
