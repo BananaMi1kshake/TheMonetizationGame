@@ -133,42 +133,62 @@ class MonetizationGame {
 
     /**
      * Loads the game state from localStorage or initializes a new game.
+     * This version is robust against corrupted or outdated save files.
      */
     load() {
-        const savedData = localStorage.getItem('monetizationSimSave_v2');
         const defaultState = this.getDefaultState();
+        // Always start with a clean default state.
+        Object.assign(this, defaultState);
 
-        if (savedData) {
-            try {
-                const savedState = JSON.parse(savedData);
-                Object.assign(this, defaultState);
-                Object.assign(this, savedState);
+        const savedData = localStorage.getItem('monetizationSimSave_v2');
+        if (!savedData) return; // Exit if no save data.
 
-                // Deep merge nested objects to prevent issues with old saves
-                this.hiredStaff = new Set(savedState.hiredStaff || []);
-                
-                const defaultUpgrades = defaultState.upgrades;
-                const savedUpgrades = savedState.upgrades || {};
-                const mergedUpgrades = {};
-                for (const key in defaultUpgrades) {
-                    if (defaultUpgrades.hasOwnProperty(key)) {
-                        mergedUpgrades[key] = { ...defaultUpgrades[key], ...(savedUpgrades[key] || {}) };
+        try {
+            const savedState = JSON.parse(savedData);
+
+            // Create a new state object by merging default and saved states.
+            const finalState = { ...defaultState, ...savedState };
+
+            // Handle nested objects carefully to prevent corruption.
+            // Upgrades:
+            const mergedUpgrades = { ...defaultState.upgrades };
+            if (savedState.upgrades) {
+                for (const key in mergedUpgrades) {
+                    if (savedState.upgrades[key] && typeof mergedUpgrades[key] === 'object' && typeof savedState.upgrades[key] === 'object') {
+                        mergedUpgrades[key] = { ...mergedUpgrades[key], ...savedState.upgrades[key] };
                     }
                 }
-                this.upgrades = mergedUpgrades;
-
-                this.achievements = { ...defaultState.achievements, ...savedState.achievements };
-                this.stats = { ...defaultState.stats, ...savedState.stats };
-                this.staffCosts = { ...defaultState.staffCosts, ...savedState.staffCosts };
-                this.settings = { ...defaultState.settings, ...savedState.settings };
-
-                this.handleOfflineProgress(savedState.lastSavedTime || Date.now());
-            } catch (error) {
-                console.error("Failed to load saved data, starting fresh.", error);
-                Object.assign(this, this.getDefaultState());
             }
-        } else {
-            Object.assign(this, defaultState);
+            finalState.upgrades = mergedUpgrades;
+
+            // Achievements:
+            const mergedAchievements = { ...defaultState.achievements };
+             if (savedState.achievements) {
+                for (const key in mergedAchievements) {
+                    if (savedState.achievements[key] && typeof mergedAchievements[key] === 'object' && typeof savedState.achievements[key] === 'object') {
+                        mergedAchievements[key] = { ...mergedAchievements[key], ...savedState.achievements[key] };
+                    }
+                }
+            }
+            finalState.achievements = mergedAchievements;
+
+            // Stats and Settings
+            finalState.stats = { ...defaultState.stats, ...(savedState.stats || {}) };
+            finalState.settings = { ...defaultState.settings, ...(savedState.settings || {}) };
+
+            // Assign the fully merged and safe state to `this`.
+            Object.assign(this, finalState);
+            
+            // Rehydrate the Set for hiredStaff from the saved array.
+            this.hiredStaff = new Set(savedState.hiredStaff || []);
+
+            // Handle offline progress
+            this.handleOfflineProgress(savedState.lastSavedTime || Date.now());
+
+        } catch (error) {
+            console.error("Failed to load saved data. Starting a new game.", error);
+            localStorage.removeItem('monetizationSimSave_v2'); // Clear the corrupted save file.
+            Object.assign(this, this.getDefaultState()); // Ensure state is reset to default.
         }
     }
     
@@ -191,13 +211,13 @@ class MonetizationGame {
     }
 
     /**
-     * Resets all game progress after confirmation.
+     * Resets all game progress.
      */
     reset() {
-        if (confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
-            localStorage.removeItem('monetizationSimSave_v2');
-            location.reload();
-        }
+        // NOTE: The confirm() dialog was removed as it may not work in all environments.
+        // A custom modal would be a better long-term solution.
+        localStorage.removeItem('monetizationSimSave_v2');
+        location.reload();
     }
 
     // --- Core Gameplay Logic ---
@@ -1028,4 +1048,3 @@ class MonetizationGame {
 window.onload = () => {
     const game = new MonetizationGame();
     game.start();
-};
