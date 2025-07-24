@@ -43,6 +43,8 @@
             <h1 class="text-3xl font-bold text-center">Monetization Simulator</h1>
         </header>
 
+        
+
         <div class="bg-gray-900 text-white p-3 rounded-lg shadow-md mb-4 sticky top-2 z-50 flex justify-around items-center text-center">
             <div>
                 <span class="text-sm text-gray-400">Leads</span>
@@ -56,7 +58,15 @@
                 <span class="text-sm text-gray-400">Rate</span>
                 <p class="text-xl font-semibold">$<span id="globalRate">0.00</span>/s</p>
             </div>
-        </div>
+            <div>
+                <span class="text-sm text-gray-400">Lead Gen Rate</span>
+                <p class="text-xl font-semibold" id="globalLeadGenRate">0.00/s</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-400">Lead Dev Rate</span>
+                <p class="text-xl font-semibold" id="globalLeadDevRate">0.00/s</p>
+            </div>
+            </div>
 
         <div id="nav-buttons" class="bg-white rounded-lg shadow-md p-2 mb-4 flex flex-wrap justify-center gap-2">
             <button data-screen="salesScreen" class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Sales</button>
