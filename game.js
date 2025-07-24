@@ -60,11 +60,15 @@ class MonetizationGame {
             },
             settings: {
                 offlineProgress: false,
-                staffTextAnimation: true
+                staffTextAnimation: true,
+                allStaffSpeedMultiplier: 1 // For global staff speed events like 'Staff Quitting'
             },
             lastSavedTime: Date.now(),
             activeEvent: null,
             eventCooldown: 180,
+            // Add these for events that halt actions
+            isLeadDevelopmentHalted: false, // For 'Core Feature Bug'
+            isLeadGenerationHalted: false,  // For 'Data Breach'
             // Non-saved transient state
             emailCharIndex: 0,
             adCharIndex: 0,
@@ -162,7 +166,7 @@ class MonetizationGame {
 
     // --- Core Gameplay ---
     getLeadChance() {
-        let chance = 0.01; // Increased base chance
+        let chance = 0.02; // Increased base chance
         chance += this.upgrades.betterLeadForms.level * this.upgrades.betterLeadForms.chanceIncrease;
         chance += 0.01 * this.getStaffCount('sales') * this.upgrades.betterEmailSubject.level;
         if (this.activeEvent && this.activeEvent.key === 'negativePR') {
@@ -176,6 +180,17 @@ class MonetizationGame {
     }
 
     tryGenerateLead(isManualClick = false) {
+        if (this.isLeadGenerationHalted) { // For Data Breach event
+            if (isManualClick || this.settings.staffTextAnimation) {
+                if (this.emailCharIndex >= emailContent.length) {
+                    this.emailCharIndex = 0;
+                }
+                this.emailCharIndex++;
+                if (isManualClick) this.updateSalesScreen(); // Update only if manual click
+            }
+            return;
+        }
+
         if (isManualClick) {
             this.stats.totalManualClicks++;
         }
@@ -212,6 +227,17 @@ class MonetizationGame {
     }
 
     developLead(isManualClick = false) {
+        if (this.isLeadDevelopmentHalted) { // For Core Feature Bug event
+            if (this.leads <= 0 && (isManualClick || this.settings.staffTextAnimation)) {
+                 if (this.adCharIndex >= adScriptContent.length) {
+                    this.adCharIndex = 0;
+                }
+                this.adCharIndex++;
+                if (isManualClick) this.updateAccountScreen(); // Update only if manual click
+            }
+            return;
+        }
+
         if (this.leads <= 0) {
             if (isManualClick) {
                  if (this.adCharIndex >= adScriptContent.length) {
@@ -280,7 +306,7 @@ class MonetizationGame {
             this.staffCosts[type] *= staffData[type].costMultiplier;
 
             if (type === 'products') {
-                this.incomeRate += 5;
+                this.incomeRate += 5; // Emil's direct income
             }
 
             this.restartIntervals();
@@ -329,6 +355,111 @@ class MonetizationGame {
         return false;
     }
 
+    // --- NEW HELPER METHODS FOR CALCULATING STAFF INTERVALS ---
+
+    // Gets the base interval for staff, considering global speed effects
+    getBaseStaffInterval() {
+        let baseInterval = 500; // Original base speed in ms
+        if (this.upgrades.amirsAutomation.purchased) {
+            baseInterval /= 2; // 'Amir’s Automation' makes automated staff twice as fast
+        }
+        // Apply global speed modifiers from events
+        if (this.activeEvent) {
+            if (this.activeEvent.key === 'productivityGuru') baseInterval *= 0.5; // 'Productivity Guru Visits' makes all staff 50% faster
+            if (this.activeEvent.key === 'teamBurnout') baseInterval *= 1.25; // 'Team Burnout' makes all staff 25% slower (500 * 1.25 = 625ms)
+        }
+        // Apply general allStaffSpeedMultiplier from events like 'Staff Quitting'
+        if (this.settings.allStaffSpeedMultiplier) {
+            baseInterval *= this.settings.allStaffSpeedMultiplier;
+        }
+        return baseInterval;
+    }
+
+    // Gets the effective interval for Sales staff
+    getEffectiveSalesStaffInterval() {
+        let interval = this.getBaseStaffInterval() * 1.5; // Sales staff base interval is 1.5x the base
+        // Add any sales-specific event modifiers here if you implement them
+        return interval;
+    }
+
+    // Gets the effective interval for Accounts staff
+    getEffectiveAccountsStaffInterval() {
+        let interval = this.getBaseStaffInterval(); // Accounts staff base interval
+        // 'Account Revitalization' specifically speeds up Accounts staff
+        if (this.activeEvent && this.activeEvent.key === 'accountRevitalization') {
+            interval *= 0.75; // 25% faster for accounts staff
+        }
+        return interval;
+    }
+
+    // --- NEW RATE CALCULATION METHODS ---
+
+    // Calculates the total passive Lead Generation Rate (Successful Leads per Second)
+    getLeadGenerationRatePerSecond() {
+        let totalPassiveLeadsPerSecond = 0;
+        const salesStaffCount = this.getStaffCount('sales');
+        const effectiveSalesInterval = this.getEffectiveSalesStaffInterval();
+        const effectiveLeadChance = this.getLeadChance(); // Get current calculated lead chance
+
+        // Contribution from Sales Staff
+        if (salesStaffCount > 0 && effectiveSalesInterval > 0 && isFinite(effectiveSalesInterval)) {
+            // Clicks per second from staff * chance per click = successful leads per second
+            totalPassiveLeadsPerSecond += (salesStaffCount * 1000) / effectiveSalesInterval * effectiveLeadChance;
+        }
+
+        // Contribution from 'Referral Program' upgrade
+        if (this.upgrades.referralProgram.level > 0) {
+            totalPassiveLeadsPerSecond += this.upgrades.referralProgram.level / 10; // 1 lead per 10 seconds per level
+        }
+
+        // Apply 'Viral Marketing Campaign' multiplier if active
+        if (this.activeEvent && this.activeEvent.key === 'viralMarketing') {
+            totalPassiveLeadsPerSecond *= 5; // Generates 5x leads
+        }
+
+        // Apply 'Negative PR' effect if active (its impact is already factored into getLeadChance())
+
+        // If 'Data Breach' event is active, lead generation is halted
+        if (this.isLeadGenerationHalted) {
+            return 0;
+        }
+
+        return totalPassiveLeadsPerSecond;
+    }
+
+    // Calculates the total passive Lead Development Rate (Clicks per Second)
+    getLeadDevelopmentRatePerSecond() {
+        let totalClicksPerSecond = 0;
+        const accountsStaffCount = this.getStaffCount('accounts');
+        const effectiveAccountsInterval = this.getEffectiveAccountsStaffInterval();
+
+        // Contribution from Accounts Staff
+        if (accountsStaffCount > 0 && effectiveAccountsInterval > 0 && isFinite(effectiveAccountsInterval)) {
+            totalClicksPerSecond += (accountsStaffCount * 1000) / effectiveAccountsInterval;
+        }
+
+        // Contribution from 'Background Music' upgrade
+        if (this.upgrades.backgroundMusic.level > 0) {
+            totalClicksPerSecond += accountsStaffCount * this.upgrades.backgroundMusic.level; // Extra clicks per second per Accounts staff
+        }
+
+        // If 'Server Crash Penalty' event is active, all income and lead development is halted
+        if (this.activeEvent && this.activeEvent.key === 'serverCrashPenalty') {
+            return 0;
+        }
+
+        // If 'Core Feature Bug' event is active, lead development is halted
+        if (this.isLeadDevelopmentHalted) {
+            return 0;
+        }
+
+        // This rate is in "clicks per second". If you want "leads developed per second",
+        // you'd divide by this.clicksToDevelopLead, but that would make it more complex
+        // due to fractional leads. Displaying clicks/sec is often clearer for development rate.
+        return totalClicksPerSecond;
+    }
+
+
     // --- UI & Rendering ---
     renderAll() {
         this.updateGlobalStats();
@@ -345,6 +476,10 @@ class MonetizationGame {
         DOM.globalLeadCount.textContent = this.leads;
         DOM.globalMoneyCount.textContent = this.money.toFixed(2);
         DOM.globalRate.textContent = this.getPassiveIncome().toFixed(2);
+
+        // Update NEW rate displays
+        DOM.globalLeadGenRate.textContent = this.getLeadGenerationRatePerSecond().toFixed(2) + '/s';
+        DOM.globalLeadDevRate.textContent = this.getLeadDevelopmentRatePerSecond().toFixed(2) + '/s';
     }
     
     updateSalesScreen() {
@@ -362,6 +497,15 @@ class MonetizationGame {
         this.hiredStaff.forEach(staffName => {
             const li = document.createElement('li');
             const type = Object.keys(staffData).find(t => staffData[t].members.includes(staffName));
+            
+            // Add safeguard for unknown staff names (e.g., from old/corrupt saves)
+            if (!type) {
+                console.warn(`Hired staff member "${staffName}" not found in staffData. Skipping render for this staff.`);
+                // You might choose to remove the invalid staff from hiredStaff here if you want to clean up saves
+                // this.hiredStaff.delete(staffName);
+                return; 
+            }
+
             li.textContent = `${staffName} (${staffData[type].name})`;
             li.className = 'text-gray-700';
             DOM.hiredStaffList.appendChild(li);
@@ -553,13 +697,21 @@ class MonetizationGame {
         const event = eventData[randomKey];
         
         let description = event.description();
-        if (['viralMarketing', 'teamBurnout'].includes(randomKey)) {
-            const staff = [...this.hiredStaff].filter(s => staffData.sales.members.includes(s));
-            description = staff.length > 0 ? event.description(staff[Math.floor(Math.random() * staff.length)]) : event.description("Someone");
-        }
-        if (['foundInvoice', 'abTest'].includes(randomKey)) {
-            const staff = [...this.hiredStaff].filter(s => staffData.accounts.members.includes(s));
-            description = staff.length > 0 ? event.description(staff[Math.floor(Math.random() * staff.length)]) : event.description("Someone");
+        // Updated staff member selection for new events
+        if (['viralMarketing', 'teamBurnout', 'strategicPartnership', 'regulatoryChange'].includes(randomKey)) {
+            const salesStaff = [...this.hiredStaff].filter(s => staffData.sales.members.includes(s));
+            description = salesStaff.length > 0 ? event.description(salesStaff[Math.floor(Math.random() * salesStaff.length)]) : event.description("Someone from Sales");
+        } else if (['foundInvoice', 'abTest', 'accountRevitalization', 'clientBacklash', 'dataBreach'].includes(randomKey)) {
+            const accountsStaff = [...this.hiredStaff].filter(s => staffData.accounts.members.includes(s));
+            description = accountsStaff.length > 0 ? event.description(accountsStaff[Math.floor(Math.random() * accountsStaff.length)]) : event.description("Someone from Accounts");
+        } else if (['productFeatureLaunch', 'hackathonSuccess', 'coreFeatureBug'].includes(randomKey)) {
+            description = event.description("Emil"); // Emil is unique
+        } else if (randomKey === 'staffQuitting') {
+            const allHiredStaff = [...this.hiredStaff]; // Any hired staff
+            description = allHiredStaff.length > 0 ? event.description(allHiredStaff[Math.floor(Math.random() * allHiredStaff.length)]) : event.description("A staff member");
+        } else {
+            // Default description for other events that don't need a specific staff member
+            description = event.description();
         }
 
         DOM.eventModal.title.textContent = event.title;
@@ -596,6 +748,11 @@ class MonetizationGame {
         const event = eventData[key];
         if (event.onStart) event.onStart(this);
         
+        // Handle temporary effect flags/multipliers
+        if (key === 'coreFeatureBug') this.isLeadDevelopmentHalted = true;
+        if (key === 'dataBreach') this.isLeadGenerationHalted = true;
+        if (key === 'staffQuitting') this.settings.allStaffSpeedMultiplier = 1.1; // Slower
+
         if (event.duration > 0) {
             this.activeEvent = { key: key, timeLeft: event.duration };
             this.updateActiveEventTimer();
@@ -605,6 +762,11 @@ class MonetizationGame {
             // Instant effects
             if (key === 'foundInvoice') this.money += this.money * 0.10;
             if (key === 'officeExpense') this.money *= 0.95;
+            if (key === 'clientBacklash') this.money *= 0.85; // Lost 15%
+            if (key === 'regulatoryChange') this.leads = Math.floor(this.leads * 0.5); // Lost 50% leads
+            if (key === 'productFeatureLaunch') {
+                this.money += this.leads * this.getIncomeFromLead() * 0.25; // Gain 25% of current leads' potential value
+            }
         }
     }
 
@@ -612,6 +774,12 @@ class MonetizationGame {
         if (!this.activeEvent) return;
         const event = eventData[this.activeEvent.key];
         if (event.onEnd) event.onEnd(this);
+
+        // Revert temporary effect flags/multipliers
+        if (this.activeEvent.key === 'coreFeatureBug') this.isLeadDevelopmentHalted = false;
+        if (this.activeEvent.key === 'dataBreach') this.isLeadGenerationHalted = false;
+        if (this.activeEvent.key === 'staffQuitting') this.settings.allStaffSpeedMultiplier = 1; // Reset to normal
+
         this.activeEvent = null;
         DOM.activeEventTimer.el.classList.add('hidden');
         this.restartIntervals(); // Restart to remove speed changes
@@ -666,28 +834,27 @@ class MonetizationGame {
         this.activeIntervals.forEach(clearInterval);
         this.activeIntervals = [];
 
-        let baseSpeed = 500;
-        if (this.upgrades.amirsAutomation.purchased) {
-            baseSpeed /= 2;
-        }
-        if (this.activeEvent) {
-            if (this.activeEvent.key === 'productivityGuru') baseSpeed *= 0.5;
-            if (this.activeEvent.key === 'teamBurnout') baseSpeed *= 1.25;
-        }
-        
-        const salesStaffSpeed = baseSpeed * 1.5;
-        const accountsStaffSpeed = baseSpeed;
-
         const salesStaffCount = this.getStaffCount('sales');
+        const accountsStaffCount = this.getStaffCount('accounts');
+
+        const effectiveSalesInterval = this.getEffectiveSalesStaffInterval();
+        const effectiveAccountsInterval = this.getEffectiveAccountsStaffInterval();
+
+        // Create intervals for Sales staff
         for (let i = 0; i < salesStaffCount; i++) {
-            this.activeIntervals.push(setInterval(() => this.tryGenerateLead(false), salesStaffSpeed));
+            if (effectiveSalesInterval > 0 && isFinite(effectiveSalesInterval)) {
+                this.activeIntervals.push(setInterval(() => this.tryGenerateLead(false), effectiveSalesInterval));
+            }
         }
         
-        const accountsStaffCount = this.getStaffCount('accounts');
+        // Create intervals for Accounts staff
         for (let i = 0; i < accountsStaffCount; i++) {
-            this.activeIntervals.push(setInterval(() => this.developLead(false), accountsStaffSpeed));
+            if (effectiveAccountsInterval > 0 && isFinite(effectiveAccountsInterval)) {
+                this.activeIntervals.push(setInterval(() => this.developLead(false), effectiveAccountsInterval));
+            }
         }
 
+        // Existing intervals for upgrades that provide passive adds, not just speed multipliers
         if (this.upgrades.referralProgram.level > 0) {
             this.activeIntervals.push(setInterval(() => { this.leads += this.upgrades.referralProgram.level; }, 10000));
         }
