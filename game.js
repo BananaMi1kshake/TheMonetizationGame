@@ -257,7 +257,10 @@ class MonetizationGame {
     
     getIncomeFromLead() {
         let income = this.incomePerLead;
-        if (this.upgrades.sycGlobal.purchased) income *= this.upgrades.sycGlobal.multiplier;
+        // Fix for СУЦ NaN error: Access multiplier directly from upgradeData definition
+        if (this.upgrades.sycGlobal.purchased) {
+            income *= upgradeData.global.upgrades.sycGlobal.multiplier;
+        }
         if (Math.random() < this.upgrades.cpmOptimization.chance) income *= 2;
         if (this.activeEvent && this.activeEvent.key === 'bullMarket') income *= 2;
         if (this.activeEvent && this.activeEvent.key === 'adNetworkOutage') income /= 2;
