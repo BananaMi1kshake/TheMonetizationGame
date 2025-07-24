@@ -43,6 +43,7 @@ class MonetizationGame {
         this.load(); // Load game state from localStorage or set default values.
         this.activeIntervals = []; // Stores all active setInterval IDs.
         this.holdInterval = null; // For the 'Coffee Machine' upgrade.
+        this.isKeyPressed = {}; // Manually track which keys are pressed to prevent repeats.
     }
 
     // --- State Management ---
@@ -123,6 +124,7 @@ class MonetizationGame {
         // Don't save transient properties
         delete stateToSave.activeIntervals;
         delete stateToSave.holdInterval;
+        delete stateToSave.isKeyPressed;
         // Convert Set to Array for JSON serialization
         stateToSave.hiredStaff = Array.from(this.hiredStaff);
         stateToSave.lastSavedTime = Date.now();
@@ -906,7 +908,10 @@ class MonetizationGame {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (event) => {
-            if (event.repeat) return; // Prevents continuous clicks from holding a key
+            // If the key is already held down, do nothing.
+            if (this.isKeyPressed[event.code]) return;
+            // Mark the key as pressed.
+            this.isKeyPressed[event.code] = true;
 
             const activeScreen = document.querySelector('.screen.active');
             if (!activeScreen) return;
@@ -914,6 +919,11 @@ class MonetizationGame {
                 case 'salesScreen': this.tryGenerateLead(true); break;
                 case 'accountScreen': this.developLead(true); break;
             }
+        });
+
+        // Add a keyup listener to reset the flag when the key is released.
+        document.addEventListener('keyup', (event) => {
+            this.isKeyPressed[event.code] = false;
         });
 
         // Hire staff buttons
