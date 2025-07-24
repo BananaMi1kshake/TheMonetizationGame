@@ -1,6 +1,10 @@
 // game.js
-// Make sure dom.js, upgrades.js, achievements.js, events.js are loaded before this file.
+// Main game logic for Monetization Simulator.
+// Assumes dom.js, upgrades.js, achievements.js, and events.js are loaded before this file.
 
+/**
+ * Defines the data for different staff departments, including their cost and members.
+ */
 const staffData = {
     sales: {
         name: 'Sales',
@@ -22,19 +26,30 @@ const staffData = {
     }
 };
 
+/**
+ * Static text content for the sales and accounts screens.
+ */
 const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well. I'm writing to follow up on our previous conversation regarding the exciting monetization opportunities available to you...`;
 const adScriptContent = `// Monetization Script\nfunction showAd() {\n  const ad = document.createElement('div');\n  ad.className = 'ad-banner';\n  ad.innerText = 'This space is monetized!';\n  document.body.appendChild(ad);\n}\nsetInterval(showAd, 5000);`;
 
 
+/**
+ * The main class for the Monetization Simulator game.
+ * Manages game state, core logic, rendering, and event handling.
+ */
 class MonetizationGame {
     constructor() {
         this.isProcessingClick = false;
-        this.load(); // Load game state or set defaults
-        this.activeIntervals = [];
-        this.holdInterval = null;
+        this.load(); // Load game state from localStorage or set default values.
+        this.activeIntervals = []; // Stores all active setInterval IDs.
+        this.holdInterval = null; // For the 'Coffee Machine' upgrade.
     }
 
     // --- State Management ---
+
+    /**
+     * @returns {object} A default state object for a new game.
+     */
     getDefaultState() {
         return {
             leads: 0,
@@ -61,20 +76,22 @@ class MonetizationGame {
             settings: {
                 offlineProgress: false,
                 staffTextAnimation: true,
-                allStaffSpeedMultiplier: 1 // For global staff speed events like 'Staff Quitting'
+                allStaffSpeedMultiplier: 1 // For global staff speed events
             },
             lastSavedTime: Date.now(),
             activeEvent: null,
             eventCooldown: 180,
-            // Add these for events that halt actions
-            isLeadDevelopmentHalted: false, // For 'Core Feature Bug'
-            isLeadGenerationHalted: false,  // For 'Data Breach'
-            // Non-saved transient state
+            isLeadDevelopmentHalted: false,
+            isLeadGenerationHalted: false,
             emailCharIndex: 0,
             adCharIndex: 0,
         };
     }
 
+    /**
+     * Initializes the state for all upgrades from the upgradeData object.
+     * @returns {object} The initial state of all upgrades.
+     */
     getInitialUpgradeState() {
         const state = {};
         for (const category in upgradeData) {
@@ -86,6 +103,10 @@ class MonetizationGame {
         return state;
     }
 
+    /**
+     * Initializes the state for all achievements from the achievementData object.
+     * @returns {object} The initial state of all achievements.
+     */
     getInitialAchievementState() {
         const state = {};
         for (const key in achievementData) {
@@ -94,15 +115,23 @@ class MonetizationGame {
         return state;
     }
 
+    /**
+     * Saves the current game state to localStorage.
+     */
     save() {
         const stateToSave = { ...this };
+        // Don't save transient properties
         delete stateToSave.activeIntervals;
         delete stateToSave.holdInterval;
+        // Convert Set to Array for JSON serialization
         stateToSave.hiredStaff = Array.from(this.hiredStaff);
         stateToSave.lastSavedTime = Date.now();
         localStorage.setItem('monetizationSimSave_v2', JSON.stringify(stateToSave));
     }
 
+    /**
+     * Loads the game state from localStorage or initializes a new game.
+     */
     load() {
         const savedData = localStorage.getItem('monetizationSimSave_v2');
         const defaultState = this.getDefaultState();
@@ -110,12 +139,10 @@ class MonetizationGame {
         if (savedData) {
             try {
                 const savedState = JSON.parse(savedData);
-                // Start with the default state to ensure all properties exist
                 Object.assign(this, defaultState);
-                // Overwrite with saved top-level properties
                 Object.assign(this, savedState);
 
-                // Perform a deep merge for nested objects to prevent issues with old saves
+                // Deep merge nested objects to prevent issues with old saves
                 this.hiredStaff = new Set(savedState.hiredStaff || []);
                 
                 const defaultUpgrades = defaultState.upgrades;
@@ -136,19 +163,23 @@ class MonetizationGame {
                 this.handleOfflineProgress(savedState.lastSavedTime || Date.now());
             } catch (error) {
                 console.error("Failed to load saved data, starting fresh.", error);
-                Object.assign(this, defaultState);
+                Object.assign(this, this.getDefaultState());
             }
         } else {
             Object.assign(this, defaultState);
         }
     }
     
+    /**
+     * Calculates and applies offline progress if enabled.
+     * @param {number} lastSavedTime - The timestamp of the last save.
+     */
     handleOfflineProgress(lastSavedTime) {
         if (!this.settings.offlineProgress) return;
 
         const timeDiffSeconds = Math.floor((Date.now() - (lastSavedTime || Date.now())) / 1000);
-        if (timeDiffSeconds > 5) {
-            const offlineEarnings = (this.incomeRate || 0) * timeDiffSeconds * 0.5;
+        if (timeDiffSeconds > 5) { // Only calculate for more than 5 seconds of offline time
+            const offlineEarnings = (this.incomeRate || 0) * timeDiffSeconds * 0.5; // 50% of normal rate
             if (offlineEarnings > 0) {
                 this.money += offlineEarnings;
                 this.stats.totalMoneyEarned += offlineEarnings;
@@ -157,6 +188,9 @@ class MonetizationGame {
         }
     }
 
+    /**
+     * Resets all game progress after confirmation.
+     */
     reset() {
         if (confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
             localStorage.removeItem('monetizationSimSave_v2');
@@ -164,9 +198,14 @@ class MonetizationGame {
         }
     }
 
-    // --- Core Gameplay ---
+    // --- Core Gameplay Logic ---
+
+    /**
+     * Calculates the current chance of generating a lead.
+     * @returns {number} The lead generation chance (0 to 1).
+     */
     getLeadChance() {
-        let chance = 0.02; // Increased base chance
+        let chance = 0.02; // Base chance
         chance += this.upgrades.betterLeadForms.level * this.upgrades.betterLeadForms.chanceIncrease;
         chance += 0.01 * this.getStaffCount('sales') * this.upgrades.betterEmailSubject.level;
         if (this.activeEvent && this.activeEvent.key === 'negativePR') {
@@ -175,31 +214,20 @@ class MonetizationGame {
         return chance;
     }
 
-    getPassiveIncome() {
-        return this.incomeRate;
-    }
-
+    /**
+     * Attempts to generate a new lead.
+     * @param {boolean} isManualClick - True if triggered by a player click.
+     */
     tryGenerateLead(isManualClick = false) {
-        if (this.isLeadGenerationHalted) { // For Data Breach event
-            if (isManualClick || this.settings.staffTextAnimation) {
-                if (this.emailCharIndex >= emailContent.length) {
-                    this.emailCharIndex = 0;
-                }
-                this.emailCharIndex++;
-                if (isManualClick) this.updateSalesScreen(); // Update only if manual click
-            }
-            return;
-        }
+        if (this.isLeadGenerationHalted) return;
 
         if (isManualClick) {
             this.stats.totalManualClicks++;
         }
 
+        // Animate the typing text effect
         if (isManualClick || this.settings.staffTextAnimation) {
-            if (this.emailCharIndex >= emailContent.length) {
-                this.emailCharIndex = 0;
-            }
-            this.emailCharIndex++;
+            this.emailCharIndex = (this.emailCharIndex + 1) % (emailContent.length + 1);
         }
 
         const performAction = () => {
@@ -226,25 +254,16 @@ class MonetizationGame {
         }
     }
 
+    /**
+     * Contributes to developing an existing lead into a source of income.
+     * @param {boolean} isManualClick - True if triggered by a player click.
+     */
     developLead(isManualClick = false) {
-        if (this.isLeadDevelopmentHalted) { // For Core Feature Bug event
-            if (this.leads <= 0 && (isManualClick || this.settings.staffTextAnimation)) {
-                 if (this.adCharIndex >= adScriptContent.length) {
-                    this.adCharIndex = 0;
-                }
-                this.adCharIndex++;
-                if (isManualClick) this.updateAccountScreen(); // Update only if manual click
-            }
-            return;
-        }
-
+        if (this.isLeadDevelopmentHalted) return;
         if (this.leads <= 0) {
-            if (isManualClick) {
-                 if (this.adCharIndex >= adScriptContent.length) {
-                    this.adCharIndex = 0;
-                }
-                this.adCharIndex++;
-                this.updateAccountScreen();
+             if (isManualClick || this.settings.staffTextAnimation) {
+                this.adCharIndex = (this.adCharIndex + 1) % (adScriptContent.length + 1);
+                if (isManualClick) this.updateAccountScreen();
             }
             return;
         }
@@ -254,10 +273,7 @@ class MonetizationGame {
         }
 
         if (isManualClick || this.settings.staffTextAnimation) {
-            if (this.adCharIndex >= adScriptContent.length) {
-                this.adCharIndex = 0;
-            }
-            this.adCharIndex++;
+             this.adCharIndex = (this.adCharIndex + 1) % (adScriptContent.length + 1);
         }
 
         let clickMultiplier = 1;
@@ -267,6 +283,7 @@ class MonetizationGame {
         }
         this.developClicks += clickMultiplier;
 
+        // Check if enough clicks have accumulated to develop a lead
         while (this.developClicks >= this.clicksToDevelopLead && this.leads > 0) {
             const incomeFromLead = this.getIncomeFromLead();
             this.incomeRate += incomeFromLead;
@@ -281,9 +298,12 @@ class MonetizationGame {
         }
     }
     
+    /**
+     * Calculates the income generated from a single developed lead.
+     * @returns {number} The income amount.
+     */
     getIncomeFromLead() {
         let income = this.incomePerLead;
-        // Fix for СУЦ NaN error: Access multiplier directly from upgradeData definition
         if (this.upgrades.sycGlobal.purchased) {
             income *= upgradeData.global.upgrades.sycGlobal.multiplier;
         }
@@ -293,20 +313,24 @@ class MonetizationGame {
         return income;
     }
 
+    /**
+     * Hires a new staff member.
+     * @param {string} type - The department of the staff member (e.g., 'sales').
+     * @param {string} name - The name of the staff member.
+     */
     hireStaff(type, name) {
         if (this.isProcessingClick) return;
         this.isProcessingClick = true;
         try {
             const cost = this.staffCosts[type];
-            if (this.money < cost) {
-                return;
-            }
+            if (this.money < cost) return;
+
             this.money -= cost;
             this.hiredStaff.add(name);
             this.staffCosts[type] *= staffData[type].costMultiplier;
 
             if (type === 'products') {
-                this.incomeRate += 5; // Emil's direct income
+                this.incomeRate += 5; // Emil's direct income benefit
             }
 
             this.restartIntervals();
@@ -317,6 +341,11 @@ class MonetizationGame {
         }
     }
 
+    /**
+     * Buys an upgrade.
+     * @param {string} categoryKey - The category of the upgrade.
+     * @param {string} upgradeKey - The key of the upgrade to purchase.
+     */
     buyUpgrade(categoryKey, upgradeKey) {
         if (this.isProcessingClick) return;
         this.isProcessingClick = true;
@@ -325,9 +354,8 @@ class MonetizationGame {
             const upgradeState = this.upgrades[upgradeKey];
             const cost = upgradeDef.oneTime ? upgradeDef.cost : upgradeState.cost;
 
-            if (this.money < cost) {
-                return;
-            }
+            if (this.money < cost) return;
+
             this.money -= cost;
             upgradeDef.onPurchase(this);
 
@@ -342,6 +370,11 @@ class MonetizationGame {
         }
     }
     
+    /**
+     * Checks if a staff member is available to be hired based on progression.
+     * @param {string} name - The name of the staff member.
+     * @returns {boolean} True if the staff member is unlocked.
+     */
     isStaffUnlocked(name) {
         if (name === 'Azret') return true;
         if (name === 'Artyom') return this.hiredStaff.has('Azret');
@@ -349,124 +382,82 @@ class MonetizationGame {
         if (name === 'Emil') return this.hiredStaff.has('Asiya');
 
         // All other staff are unlocked after Asiya
-        if (name !== 'Azret' && name !== 'Artyom' && name !== 'Asiya' && name !== 'Emil') {
+        if (!['Azret', 'Artyom', 'Asiya', 'Emil'].includes(name)) {
             return this.hiredStaff.has('Asiya');
         }
         return false;
     }
 
-    // --- NEW HELPER METHODS FOR CALCULATING STAFF INTERVALS ---
+    // --- Rate & Interval Calculation ---
 
-    // Gets the base interval for staff, considering global speed effects
     getBaseStaffInterval() {
-        let baseInterval = 500; // Original base speed in ms
-        if (this.upgrades.amirsAutomation.purchased) {
-            baseInterval /= 2; // 'Amir’s Automation' makes automated staff twice as fast
-        }
-        // Apply global speed modifiers from events
+        let baseInterval = 500; // Base speed in ms
+        if (this.upgrades.amirsAutomation.purchased) baseInterval /= 2;
         if (this.activeEvent) {
-            if (this.activeEvent.key === 'productivityGuru') baseInterval *= 0.5; // 'Productivity Guru Visits' makes all staff 50% faster
-            if (this.activeEvent.key === 'teamBurnout') baseInterval *= 1.25; // 'Team Burnout' makes all staff 25% slower (500 * 1.25 = 625ms)
+            if (this.activeEvent.key === 'productivityGuru') baseInterval *= 0.5;
+            if (this.activeEvent.key === 'teamBurnout') baseInterval *= 1.25;
         }
-        // Apply general allStaffSpeedMultiplier from events like 'Staff Quitting'
         if (this.settings.allStaffSpeedMultiplier) {
             baseInterval *= this.settings.allStaffSpeedMultiplier;
         }
         return baseInterval;
     }
 
-    // Gets the effective interval for Sales staff
     getEffectiveSalesStaffInterval() {
-        let interval = this.getBaseStaffInterval() * 1.5; // Sales staff base interval is 1.5x the base
-        // Add any sales-specific event modifiers here if you implement them
-        return interval;
+        return this.getBaseStaffInterval() * 1.5;
     }
 
-    // Gets the effective interval for Accounts staff
     getEffectiveAccountsStaffInterval() {
-        let interval = this.getBaseStaffInterval(); // Accounts staff base interval
-        // 'Account Revitalization' specifically speeds up Accounts staff
+        let interval = this.getBaseStaffInterval();
         if (this.activeEvent && this.activeEvent.key === 'accountRevitalization') {
-            interval *= 0.75; // 25% faster for accounts staff
+            interval *= 0.75;
         }
         return interval;
     }
 
-    // --- NEW RATE CALCULATION METHODS ---
-
-    // Calculates the total passive Lead Generation Rate (Successful Leads per Second)
     getLeadGenerationRatePerSecond() {
-        let totalPassiveLeadsPerSecond = 0;
+        if (this.isLeadGenerationHalted) return 0;
+        let rate = 0;
         const salesStaffCount = this.getStaffCount('sales');
-        const effectiveSalesInterval = this.getEffectiveSalesStaffInterval();
-        const effectiveLeadChance = this.getLeadChance(); // Get current calculated lead chance
-
-        // Contribution from Sales Staff
-        if (salesStaffCount > 0 && effectiveSalesInterval > 0 && isFinite(effectiveSalesInterval)) {
-            // Clicks per second from staff * chance per click = successful leads per second
-            totalPassiveLeadsPerSecond += (salesStaffCount * 1000) / effectiveSalesInterval * effectiveLeadChance;
+        const interval = this.getEffectiveSalesStaffInterval();
+        if (salesStaffCount > 0 && interval > 0) {
+            rate += (salesStaffCount * 1000 / interval) * this.getLeadChance();
         }
-
-        // Contribution from 'Referral Program' upgrade
         if (this.upgrades.referralProgram.level > 0) {
-            totalPassiveLeadsPerSecond += this.upgrades.referralProgram.level / 10; // 1 lead per 10 seconds per level
+            rate += this.upgrades.referralProgram.level / 10;
         }
-
-        // Apply 'Viral Marketing Campaign' multiplier if active
         if (this.activeEvent && this.activeEvent.key === 'viralMarketing') {
-            totalPassiveLeadsPerSecond *= 5; // Generates 5x leads
+            rate *= 5;
         }
-
-        // Apply 'Negative PR' effect if active (its impact is already factored into getLeadChance())
-
-        // If 'Data Breach' event is active, lead generation is halted
-        if (this.isLeadGenerationHalted) {
-            return 0;
-        }
-
-        return totalPassiveLeadsPerSecond;
+        return rate;
     }
 
-    // Calculates the total passive Lead Development Rate (Clicks per Second)
     getLeadDevelopmentRatePerSecond() {
-        let totalClicksPerSecond = 0;
+        if (this.isLeadDevelopmentHalted || (this.activeEvent && this.activeEvent.key === 'serverCrashPenalty')) return 0;
+        let rate = 0;
         const accountsStaffCount = this.getStaffCount('accounts');
-        const effectiveAccountsInterval = this.getEffectiveAccountsStaffInterval();
-
-        // Contribution from Accounts Staff
-        if (accountsStaffCount > 0 && effectiveAccountsInterval > 0 && isFinite(effectiveAccountsInterval)) {
-            totalClicksPerSecond += (accountsStaffCount * 1000) / effectiveAccountsInterval;
+        const interval = this.getEffectiveAccountsStaffInterval();
+        if (accountsStaffCount > 0 && interval > 0) {
+            rate += (accountsStaffCount * 1000) / interval;
         }
-
-        // Contribution from 'Background Music' upgrade
         if (this.upgrades.backgroundMusic.level > 0) {
-            totalClicksPerSecond += accountsStaffCount * this.upgrades.backgroundMusic.level; // Extra clicks per second per Accounts staff
+            rate += accountsStaffCount * this.upgrades.backgroundMusic.level;
         }
-
-        // If 'Server Crash Penalty' event is active, all income and lead development is halted
-        if (this.activeEvent && this.activeEvent.key === 'serverCrashPenalty') {
-            return 0;
-        }
-
-        // If 'Core Feature Bug' event is active, lead development is halted
-        if (this.isLeadDevelopmentHalted) {
-            return 0;
-        }
-
-        // This rate is in "clicks per second". If you want "leads developed per second",
-        // you'd divide by this.clicksToDevelopLead, but that would make it more complex
-        // due to fractional leads. Displaying clicks/sec is often clearer for development rate.
-        return totalClicksPerSecond;
+        return rate;
     }
 
 
     // --- UI & Rendering ---
+
+    /**
+     * Calls all rendering functions to update the UI.
+     */
     renderAll() {
         this.updateGlobalStats();
         this.updateSalesScreen();
         this.updateAccountScreen();
         this.renderStaff();
-        this.renderOfficeStaff(); // ADD THIS
+        this.renderOfficeStaff();
         this.renderUpgrades();
         this.renderAchievements();
         this.renderStatistics();
@@ -477,8 +468,6 @@ class MonetizationGame {
         DOM.globalLeadCount.textContent = this.leads;
         DOM.globalMoneyCount.textContent = this.money.toFixed(2);
         DOM.globalRate.textContent = this.getPassiveIncome().toFixed(2);
-
-        // Update NEW rate displays
         DOM.globalLeadGenRate.textContent = this.getLeadGenerationRatePerSecond().toFixed(2) + '/s';
         DOM.globalLeadDevRate.textContent = this.getLeadDevelopmentRatePerSecond().toFixed(2) + '/s';
     }
@@ -498,15 +487,7 @@ class MonetizationGame {
         this.hiredStaff.forEach(staffName => {
             const li = document.createElement('li');
             const type = Object.keys(staffData).find(t => staffData[t].members.includes(staffName));
-            
-            // Add safeguard for unknown staff names (e.g., from old/corrupt saves)
-            if (!type) {
-                console.warn(`Hired staff member "${staffName}" not found in staffData. Skipping render for this staff.`);
-                // You might choose to remove the invalid staff from hiredStaff here if you want to clean up saves
-                // this.hiredStaff.delete(staffName);
-                return; 
-            }
-
+            if (!type) return; 
             li.textContent = `${staffName} (${staffData[type].name})`;
             li.className = 'text-gray-700';
             DOM.hiredStaffList.appendChild(li);
@@ -515,7 +496,6 @@ class MonetizationGame {
         DOM.staffForHire.innerHTML = '';
         for (const typeKey in staffData) {
             const typeInfo = staffData[typeKey];
-            
             const unlockedMembers = typeInfo.members.filter(name => this.isStaffUnlocked(name));
             if (unlockedMembers.length === 0) continue;
 
@@ -544,7 +524,9 @@ class MonetizationGame {
         }
     }
 
-    // NEW FUNCTION TO RENDER STAFF IN OFFICE
+    /**
+     * Renders the visual representations of staff in their office spaces.
+     */
     renderOfficeStaff() {
         DOM.salesOffice.innerHTML = '';
         DOM.accountsOffice.innerHTML = '';
@@ -564,10 +546,8 @@ class MonetizationGame {
             } else if (staffData.accounts.members.includes(name)) {
                 DOM.accountsOffice.appendChild(staffChar);
             }
-            // "Products" staff like Emil won't be shown in these offices, but you could add a third office if desired.
         });
     }
-
 
     renderUpgrades() {
         DOM.upgradesContainer.innerHTML = '';
@@ -581,13 +561,10 @@ class MonetizationGame {
 
             for (const upgradeKey in category.upgrades) {
                 const upgradeDef = category.upgrades[upgradeKey];
-
                 if (upgradeKey === 'cpmOptimization' && !this.hiredStaff.has('Amir')) {
                     continue; 
                 }
-
                 const upgradeState = this.upgrades[upgradeKey];
-                
                 const isPurchased = upgradeDef.oneTime && upgradeState.purchased;
                 const isMaxed = upgradeDef.isMaxed && upgradeDef.isMaxed(this);
                 const cost = upgradeDef.oneTime ? upgradeDef.cost : upgradeState.cost;
@@ -656,24 +633,15 @@ class MonetizationGame {
     }
 
     renderSettings() {
-        if (this.settings.offlineProgress) {
-            DOM.toggleOfflineProgress.textContent = 'ON';
-            DOM.toggleOfflineProgress.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-green-500 text-white';
-        } else {
-            DOM.toggleOfflineProgress.textContent = 'OFF';
-            DOM.toggleOfflineProgress.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-red-500 text-white';
-        }
-
-        if (this.settings.staffTextAnimation) {
-            DOM.toggleStaffAnimation.textContent = 'ON';
-            DOM.toggleStaffAnimation.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-green-500 text-white';
-        } else {
-            DOM.toggleStaffAnimation.textContent = 'OFF';
-            DOM.toggleStaffAnimation.className = 'px-4 py-1 rounded-full font-semibold text-sm bg-red-500 text-white';
-        }
+        DOM.toggleOfflineProgress.textContent = this.settings.offlineProgress ? 'ON' : 'OFF';
+        DOM.toggleOfflineProgress.className = `px-4 py-1 rounded-full font-semibold text-sm ${this.settings.offlineProgress ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+        
+        DOM.toggleStaffAnimation.textContent = this.settings.staffTextAnimation ? 'ON' : 'OFF';
+        DOM.toggleStaffAnimation.className = `px-4 py-1 rounded-full font-semibold text-sm ${this.settings.staffTextAnimation ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
     }
 
-    // --- Achievements & Popups ---
+    // --- Popups, Modals & Animations ---
+
     checkAchievements() {
         let changed = false;
         for (const key in achievementData) {
@@ -686,15 +654,17 @@ class MonetizationGame {
         if (changed) this.renderAchievements();
     }
     
-    // NEW function to trigger animation on a staff character
+    /**
+     * Triggers the 'working' animation on a staff member's visual representation.
+     * @param {string} name - The name of the staff member to animate.
+     */
     triggerStaffAnimation(name) {
         const staffVisual = document.getElementById(`staff-visual-${name}`);
         if (staffVisual) {
             staffVisual.classList.add('is-working');
-            // Remove the class after the animation finishes to allow re-triggering
             setTimeout(() => {
                 staffVisual.classList.remove('is-working');
-            }, 400); // Must match animation duration in CSS
+            }, 400); // Duration must match the CSS animation
         }
     }
 
@@ -728,14 +698,16 @@ class MonetizationGame {
     }
 
     // --- Event System ---
+
     triggerRandomEvent() {
         if (this.hiredStaff.size === 0) return;
+        // More challenging 'bad' events only trigger after hiring a few staff members.
         const eventKeys = Object.keys(eventData).filter(k => eventData[k].type !== 'bad' || this.hiredStaff.size > 2);
         const randomKey = eventKeys[Math.floor(Math.random() * eventKeys.length)];
         const event = eventData[randomKey];
         
+        // Select a random staff member's name for flavor text if needed.
         let description = event.description();
-        // Updated staff member selection for new events
         if (['viralMarketing', 'teamBurnout', 'strategicPartnership', 'regulatoryChange'].includes(randomKey)) {
             const salesStaff = [...this.hiredStaff].filter(s => staffData.sales.members.includes(s));
             description = salesStaff.length > 0 ? event.description(salesStaff[Math.floor(Math.random() * salesStaff.length)]) : event.description("Someone from Sales");
@@ -743,13 +715,10 @@ class MonetizationGame {
             const accountsStaff = [...this.hiredStaff].filter(s => staffData.accounts.members.includes(s));
             description = accountsStaff.length > 0 ? event.description(accountsStaff[Math.floor(Math.random() * accountsStaff.length)]) : event.description("Someone from Accounts");
         } else if (['productFeatureLaunch', 'hackathonSuccess', 'coreFeatureBug'].includes(randomKey)) {
-            description = event.description("Emil"); // Emil is unique
+            description = event.description("Emil");
         } else if (randomKey === 'staffQuitting') {
-            const allHiredStaff = [...this.hiredStaff]; // Any hired staff
+            const allHiredStaff = [...this.hiredStaff];
             description = allHiredStaff.length > 0 ? event.description(allHiredStaff[Math.floor(Math.random() * allHiredStaff.length)]) : event.description("A staff member");
-        } else {
-            // Default description for other events that don't need a specific staff member
-            description = event.description();
         }
 
         DOM.eventModal.title.textContent = event.title;
@@ -779,33 +748,33 @@ class MonetizationGame {
         }
         
         DOM.eventModal.el.classList.remove('hidden');
-        this.eventCooldown = 180 + Math.random() * 120; // 3-5 minutes
+        this.eventCooldown = 180 + Math.random() * 120; // Cooldown for 3-5 minutes
     }
 
     startEvent(key) {
         const event = eventData[key];
         if (event.onStart) event.onStart(this);
         
-        // Handle temporary effect flags/multipliers
+        // Set flags for ongoing effects
         if (key === 'coreFeatureBug') this.isLeadDevelopmentHalted = true;
         if (key === 'dataBreach') this.isLeadGenerationHalted = true;
-        if (key === 'staffQuitting') this.settings.allStaffSpeedMultiplier = 1.1; // Slower
+        if (key === 'staffQuitting') this.settings.allStaffSpeedMultiplier = 1.1;
 
         if (event.duration > 0) {
             this.activeEvent = { key: key, timeLeft: event.duration };
             this.updateActiveEventTimer();
             DOM.activeEventTimer.el.classList.remove('hidden');
-            this.restartIntervals(); // Restart to apply speed changes
         } else {
-            // Instant effects
+            // Handle instant effects
             if (key === 'foundInvoice') this.money += this.money * 0.10;
             if (key === 'officeExpense') this.money *= 0.95;
-            if (key === 'clientBacklash') this.money *= 0.85; // Lost 15%
-            if (key === 'regulatoryChange') this.leads = Math.floor(this.leads * 0.5); // Lost 50% leads
+            if (key === 'clientBacklash') this.money *= 0.85;
+            if (key === 'regulatoryChange') this.leads = Math.floor(this.leads * 0.5);
             if (key === 'productFeatureLaunch') {
-                this.money += this.leads * this.getIncomeFromLead() * 0.25; // Gain 25% of current leads' potential value
+                this.money += this.leads * this.getIncomeFromLead() * 0.25;
             }
         }
+        this.restartIntervals();
     }
 
     endEvent() {
@@ -813,14 +782,14 @@ class MonetizationGame {
         const event = eventData[this.activeEvent.key];
         if (event.onEnd) event.onEnd(this);
 
-        // Revert temporary effect flags/multipliers
+        // Revert flags from ongoing effects
         if (this.activeEvent.key === 'coreFeatureBug') this.isLeadDevelopmentHalted = false;
         if (this.activeEvent.key === 'dataBreach') this.isLeadGenerationHalted = false;
-        if (this.activeEvent.key === 'staffQuitting') this.settings.allStaffSpeedMultiplier = 1; // Reset to normal
+        if (this.activeEvent.key === 'staffQuitting') this.settings.allStaffSpeedMultiplier = 1;
 
         this.activeEvent = null;
         DOM.activeEventTimer.el.classList.add('hidden');
-        this.restartIntervals(); // Restart to remove speed changes
+        this.restartIntervals();
     }
 
     updateActiveEventTimer() {
@@ -841,6 +810,10 @@ class MonetizationGame {
     }
 
     // --- Game Loop & Intervals ---
+
+    /**
+     * The main game loop, runs once per second.
+     */
     mainLoop() {
         let incomeThisTick = this.incomeRate;
         if (this.activeEvent && this.activeEvent.key === 'serverCrashPenalty') {
@@ -851,7 +824,6 @@ class MonetizationGame {
 
         if (this.activeEvent) {
             this.activeEvent.timeLeft--;
-            this.updateActiveEventTimer();
             if (this.activeEvent.timeLeft <= 0) {
                 this.endEvent();
             }
@@ -868,7 +840,9 @@ class MonetizationGame {
         this.save();
     }
     
-    // REFACTORED to create specific intervals for each staff member
+    /**
+     * Clears and recreates all automated action intervals for staff and upgrades.
+     */
     restartIntervals() {
         this.activeIntervals.forEach(clearInterval);
         this.activeIntervals = [];
@@ -876,32 +850,26 @@ class MonetizationGame {
         const effectiveSalesInterval = this.getEffectiveSalesStaffInterval();
         const effectiveAccountsInterval = this.getEffectiveAccountsStaffInterval();
 
-        // Create specific intervals for each hired staff member
+        // Create a specific interval for each hired staff member
         this.hiredStaff.forEach(name => {
-            // Is this a Sales member?
             if (staffData.sales.members.includes(name)) {
                 if (effectiveSalesInterval > 0 && isFinite(effectiveSalesInterval)) {
-                    const interval = setInterval(() => {
+                    this.activeIntervals.push(setInterval(() => {
                         this.tryGenerateLead(false);
                         this.triggerStaffAnimation(name);
-                    }, effectiveSalesInterval);
-                    this.activeIntervals.push(interval);
+                    }, effectiveSalesInterval));
                 }
-            }
-            // Is this an Accounts member?
-            else if (staffData.accounts.members.includes(name)) {
+            } else if (staffData.accounts.members.includes(name)) {
                 if (effectiveAccountsInterval > 0 && isFinite(effectiveAccountsInterval)) {
-                    const interval = setInterval(() => {
+                    this.activeIntervals.push(setInterval(() => {
                         this.developLead(false);
                         this.triggerStaffAnimation(name);
-                    }, effectiveAccountsInterval);
-                    this.activeIntervals.push(interval);
+                    }, effectiveAccountsInterval));
                 }
             }
         });
 
-
-        // Existing intervals for upgrades that provide passive adds, not just speed multipliers
+        // Intervals for upgrades that provide passive generation
         if (this.upgrades.referralProgram.level > 0) {
             this.activeIntervals.push(setInterval(() => { this.leads += this.upgrades.referralProgram.level; }, 10000));
         }
@@ -913,46 +881,49 @@ class MonetizationGame {
         }
     }
     
+    /**
+     * Gets the number of hired staff in a specific department.
+     * @param {string} type - The department name (e.g., 'sales').
+     * @returns {number} The count of hired staff.
+     */
     getStaffCount(type) {
-        let count = 0;
-        this.hiredStaff.forEach(name => {
-            if (staffData[type].members.includes(name)) {
-                count++;
-            }
-        });
-        return count;
+        return [...this.hiredStaff].filter(name => staffData[type].members.includes(name)).length;
     }
 
-    // --- Event Listeners ---
+    // --- Event Listeners Setup ---
+
     setupEventListeners() {
+        // Navigation tabs
         DOM.navButtons.addEventListener('click', e => {
             if (e.target.tagName === 'BUTTON') {
                 this.showScreen(e.target.dataset.screen);
             }
         });
 
+        // Main action buttons
         DOM.generateLeadBtn.addEventListener('click', () => this.tryGenerateLead(true));
         DOM.developLeadBtn.addEventListener('click', () => this.developLead(true));
         
+        // Keyboard shortcuts
         document.addEventListener('keydown', (event) => {
+            if (event.repeat) return; // Prevents continuous clicks from holding a key
+
             const activeScreen = document.querySelector('.screen.active');
             if (!activeScreen) return;
             switch (activeScreen.id) {
-                case 'salesScreen':
-                    this.tryGenerateLead(true);
-                    break;
-                case 'accountScreen':
-                    this.developLead(true);
-                    break;
+                case 'salesScreen': this.tryGenerateLead(true); break;
+                case 'accountScreen': this.developLead(true); break;
             }
         });
 
+        // Hire staff buttons
         DOM.staffForHire.addEventListener('click', e => {
             if (e.target.tagName === 'BUTTON' && e.target.dataset.name) {
                 this.hireStaff(e.target.dataset.type, e.target.dataset.name);
             }
         });
 
+        // Upgrade buttons
         DOM.upgradesContainer.addEventListener('click', e => {
             const button = e.target.closest('button[data-upgrade]');
             if (button) {
@@ -962,6 +933,7 @@ class MonetizationGame {
             }
         });
 
+        // Settings and save/reset buttons
         DOM.manualSaveBtn.addEventListener('click', () => {
             this.save();
             const originalText = DOM.manualSaveBtn.textContent;
@@ -979,15 +951,20 @@ class MonetizationGame {
             this.renderSettings();
         });
 
+        // Modal close buttons
         DOM.welcomeModal.closeBtn.addEventListener('click', () => DOM.welcomeModal.el.classList.add('hidden'));
         DOM.eventModal.closeBtn.addEventListener('click', () => DOM.eventModal.el.classList.add('hidden'));
         DOM.eventDetailsModal.closeBtn.addEventListener('click', () => DOM.eventDetailsModal.el.classList.add('hidden'));
         
+        // Active event timer interaction
         const timer = DOM.activeEventTimer.el;
         timer.onmouseover = () => this.showEventDetails();
         timer.onclick = () => this.showEventDetails();
     }
     
+    /**
+     * Applies hold-to-click functionality after buying the 'Coffee Machine' upgrade.
+     */
     applyCoffeeMachineListeners() {
         const setupHold = (btn, action) => {
             const startHold = (e) => {
@@ -1008,6 +985,10 @@ class MonetizationGame {
         setupHold(DOM.developLeadBtn, () => this.developLead(true));
     }
 
+    /**
+     * Switches the currently visible screen.
+     * @param {string} id - The ID of the screen to show.
+     */
     showScreen(id) {
         DOM.screens.forEach(screen => screen.classList.toggle('active', screen.id === id));
         DOM.navButtons.querySelectorAll('button').forEach(btn => {
@@ -1019,6 +1000,9 @@ class MonetizationGame {
         });
     }
 
+    /**
+     * Initializes and starts the game.
+     */
     start() {
         this.setupEventListeners();
         if (this.upgrades.coffeeMachine.purchased) {
@@ -1026,10 +1010,11 @@ class MonetizationGame {
         }
         this.restartIntervals();
         this.renderAll();
-        setInterval(() => this.mainLoop(), 1000);
+        setInterval(() => this.mainLoop(), 1000); // Main game loop runs every second
     }
 }
 
+// --- Game Initialization ---
 window.onload = () => {
     const game = new MonetizationGame();
     game.start();
