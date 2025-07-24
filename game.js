@@ -162,7 +162,7 @@ class MonetizationGame {
 
     // --- Core Gameplay ---
     getLeadChance() {
-        let chance = 0.02; // Increased base chance
+        let chance = 0.01; // Increased base chance
         chance += this.upgrades.betterLeadForms.level * this.upgrades.betterLeadForms.chanceIncrease;
         chance += 0.01 * this.getStaffCount('sales') * this.upgrades.betterEmailSubject.level;
         if (this.activeEvent && this.activeEvent.key === 'negativePR') {
