@@ -5,6 +5,8 @@ const DOM = {
     globalRate: document.getElementById('globalRate'),
     globalLeadGenRate: document.getElementById('globalLeadGenRate'), // NEW
     globalLeadDevRate: document.getElementById('globalLeadDevRate'), // NEW
+    salesOffice: document.getElementById('salesOffice'), // ADD THIS
+    accountsOffice: document.getElementById('accountsOffice'), // ADD THIS
     navButtons: document.getElementById('nav-buttons'),
     screens: document.querySelectorAll('.screen'),
     generateLeadBtn: document.getElementById('generateLeadBtn'),
