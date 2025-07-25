@@ -3,8 +3,8 @@ const DOM = {
     globalLeadCount: document.getElementById('globalLeadCount'),
     globalMoneyCount: document.getElementById('globalMoneyCount'),
     globalRate: document.getElementById('globalRate'),
-    salesLeadGenRate: document.getElementById('salesLeadGenRate'), // NEW
-    accountsLeadDevRate: document.getElementById('accountsLeadDevRate'), // NEW
+    salesLeadGenRate: document.getElementById('salesLeadGenRate'),
+    accountsLeadDevRate: document.getElementById('accountsLeadDevRate'),
     salesOffice: document.getElementById('salesOffice'),
     accountsOffice: document.getElementById('accountsOffice'),
     navButtons: document.getElementById('nav-buttons'),
