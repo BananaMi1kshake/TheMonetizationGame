@@ -23,6 +23,7 @@ const DOM = {
     resetProgressBtn: document.getElementById('resetProgressBtn'),
     toggleOfflineProgress: document.getElementById('toggleOfflineProgress'),
     toggleStaffAnimation: document.getElementById('toggleStaffAnimation'),
+    helpButton: document.getElementById('help-button'),
     // Modals & Popups
     achievementPopup: {
         el: document.getElementById('achievement-popup'),
@@ -46,6 +47,11 @@ const DOM = {
         title: document.getElementById('event-details-title'),
         description: document.getElementById('event-details-description'),
         closeBtn: document.getElementById('close-event-details-modal'),
+    },
+    tutorialModal: {
+        el: document.getElementById('tutorial-modal'),
+        closeBtn: document.getElementById('close-tutorial-modal'),
+        startBtn: document.getElementById('start-game-btn'),
     },
     activeEventTimer: {
         el: document.getElementById('active-event-timer'),
