@@ -537,8 +537,9 @@ class MonetizationGame {
 window.addEventListener('load', () => {
     // Ensure firebaseConfig is loaded before starting the game
     if (window.firebaseConfig) {
-        const game = new MonetizationGame();
-        game.start();
+        // **FIX:** Make the game instance global so other scripts can access it.
+        window.game = new MonetizationGame();
+        window.game.start();
     } else {
         console.error("Firebase config not found. Game cannot start.");
     }
