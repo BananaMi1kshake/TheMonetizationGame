@@ -183,16 +183,12 @@ const UI = {
     },
 
     renderSettings(game) {
-        // Toggle buttons
+        // This function now ONLY handles the toggle buttons, not the text inputs.
         DOM.toggleOfflineProgress.textContent = game.settings.offlineProgress ? 'ON' : 'OFF';
         DOM.toggleOfflineProgress.className = `px-4 py-1 rounded-full font-semibold text-sm ${game.settings.offlineProgress ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
         
         DOM.toggleStaffAnimation.textContent = game.settings.staffTextAnimation ? 'ON' : 'OFF';
         DOM.toggleStaffAnimation.className = `px-4 py-1 rounded-full font-semibold text-sm ${game.settings.staffTextAnimation ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
-
-        // Set current names in input fields
-        DOM.editPlayerNameInput.value = game.playerName;
-        DOM.editCompanyNameInput.value = game.companyName;
     },
 
     showScreen(id) {
@@ -204,6 +200,13 @@ const UI = {
             btn.classList.toggle('bg-gray-200', !isActive);
             btn.classList.toggle('text-gray-700', !isActive);
         });
+
+        // **FIX:** If switching to the settings screen, populate the name input fields.
+        // This prevents the main loop from resetting the user's input while they are typing.
+        if (id === 'achievementsScreen' && window.game) {
+            DOM.editPlayerNameInput.value = window.game.playerName;
+            DOM.editCompanyNameInput.value = window.game.companyName;
+        }
     },
 
     triggerStaffAnimation(name) {
