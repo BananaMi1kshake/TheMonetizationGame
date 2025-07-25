@@ -213,6 +213,14 @@ class MonetizationGame {
     }
 
     /**
+     * Calculates the current passive income rate.
+     * @returns {number} The income per second.
+     */
+    getPassiveIncome() {
+        return this.incomeRate;
+    }
+
+    /**
      * Attempts to generate a new lead.
      * @param {boolean} isManualClick - True if triggered by a player click.
      */
