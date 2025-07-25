@@ -18,18 +18,18 @@ const UI = {
         DOM.globalLeadCount.textContent = game.leads;
         DOM.globalMoneyCount.textContent = game.money.toFixed(2);
         DOM.globalRate.textContent = game.getPassiveIncome().toFixed(2);
-        DOM.globalLeadGenRate.textContent = game.getLeadGenerationRatePerSecond().toFixed(2) + '/s';
-        DOM.globalLeadDevRate.textContent = game.getLeadDevelopmentRatePerSecond().toFixed(2) + '/s';
     },
 
     updateSalesScreen(game) {
         DOM.emailText.textContent = emailContent.substring(0, game.emailCharIndex);
+        DOM.salesLeadGenRate.textContent = game.getLeadGenerationRatePerSecond().toFixed(2) + '/s';
     },
 
     updateAccountScreen(game) {
         DOM.adScriptText.textContent = adScriptContent.substring(0, game.adCharIndex);
         const progress = game.clicksToDevelopLead > 0 ? (game.developClicks / game.clicksToDevelopLead) * 100 : 0;
         DOM.progressBar.style.width = `${progress}%`;
+        DOM.accountsLeadDevRate.textContent = game.getLeadDevelopmentRatePerSecond().toFixed(2) + '/s';
     },
 
     renderStaff(game) {
