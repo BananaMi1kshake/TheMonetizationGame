@@ -1,30 +1,6 @@
 // game.js
 // Main game logic for Monetization Simulator.
-// Assumes dom.js, upgrades.js, achievements.js, and events.js are loaded before this file.
-
-/**
- * Defines the data for different staff departments, including their cost and members.
- */
-const staffData = {
-    sales: {
-        name: 'Sales',
-        cost: 5,
-        costMultiplier: 3.5,
-        members: ['Artyom', 'Alan', 'Aruna', 'Dora', 'Syrym', 'Aidos', 'Alimzhan', 'Anna', 'Bolat', 'Yerbol', 'Madi'],
-    },
-    accounts: {
-        name: 'Accounts',
-        cost: 5,
-        costMultiplier: 3.5,
-        members: ['Azret', 'Asiya', 'Daniil', 'Aizhan', 'Amir', 'Akzhan', 'Anuar', 'Hakim', 'Saniya', 'Sanzhar'],
-    },
-    products: {
-        name: 'Products',
-        cost: 100,
-        costMultiplier: 1, // No multiplier for single member
-        members: ['Emil'],
-    }
-};
+// Assumes staff.js, dom.js, upgrades.js, achievements.js, and events.js are loaded before this file.
 
 /**
  * Static text content for the sales and accounts screens.
@@ -1048,3 +1024,4 @@ class MonetizationGame {
 window.onload = () => {
     const game = new MonetizationGame();
     game.start();
+};
