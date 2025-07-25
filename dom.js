@@ -25,6 +25,7 @@ const DOM = {
     toggleStaffAnimation: document.getElementById('toggleStaffAnimation'),
     helpButtons: document.querySelectorAll('.help-icon-button'),
     companyNameDisplay: document.getElementById('companyNameDisplay'),
+    leaderboardBody: document.getElementById('leaderboard-body'),
     // Modals & Popups
     achievementPopup: {
         el: document.getElementById('achievement-popup'),
