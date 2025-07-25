@@ -133,7 +133,7 @@ class MonetizationGame {
     getPassiveIncome() { return this.incomeRate; }
 
     getLeadChance() {
-        let chance = 0.02;
+        let chance = 0.01;
         chance += this.upgrades.betterLeadForms.level * this.upgrades.betterLeadForms.chanceIncrease;
         chance += 0.01 * this.getStaffCount('sales') * this.upgrades.betterEmailSubject.level;
         if (this.activeEvent && this.activeEvent.key === 'negativePR') chance /= 2;
@@ -252,7 +252,7 @@ class MonetizationGame {
 
     // --- Rate & Interval Calculation ---
     getBaseStaffInterval() {
-        let baseInterval = 500;
+        let baseInterval = 1000;
         if (this.upgrades.amirsAutomation.purchased) baseInterval /= 2;
         if (this.activeEvent) {
             if (this.activeEvent.key === 'productivityGuru') baseInterval *= 0.5;
