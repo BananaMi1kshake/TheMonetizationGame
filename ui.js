@@ -1,6 +1,8 @@
 // ui.js
-// This file contains all functions related to updating the DOM and rendering game state.
+const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well...`;
+const adScriptContent = `// Monetization Script\nfunction showAd() {...}`;
 
+// This file contains all functions related to updating the DOM and rendering game state.
 const UI = {
     renderAll(game) {
         this.updateGlobalStats(game);
