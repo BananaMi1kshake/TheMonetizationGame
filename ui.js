@@ -12,6 +12,7 @@ const UI = {
         this.renderAchievements(game);
         this.renderStatistics(game);
         this.renderSettings(game);
+        this.renderCompanyName(game);
     },
 
     updateGlobalStats(game) {
@@ -231,6 +232,17 @@ const UI = {
 
     hideTutorial() {
         DOM.tutorialModal.el.classList.add('hidden');
-        localStorage.setItem('tutorialCompleted_v1', 'true');
+    },
+
+    showNameInputModal() {
+        DOM.nameInputModal.el.classList.remove('hidden');
+    },
+
+    hideNameInputModal() {
+        DOM.nameInputModal.el.classList.add('hidden');
+    },
+
+    renderCompanyName(game) {
+        DOM.companyNameDisplay.textContent = game.companyName;
     }
 };
