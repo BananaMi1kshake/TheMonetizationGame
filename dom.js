@@ -26,6 +26,12 @@ const DOM = {
     helpButtons: document.querySelectorAll('.help-icon-button'),
     companyNameDisplay: document.getElementById('companyNameDisplay'),
     leaderboardBody: document.getElementById('leaderboard-body'),
+    
+    // New elements for changing names in settings
+    editPlayerNameInput: document.getElementById('editPlayerNameInput'),
+    editCompanyNameInput: document.getElementById('editCompanyNameInput'),
+    updateNamesBtn: document.getElementById('updateNamesBtn'),
+
     // Modals & Popups
     achievementPopup: {
         el: document.getElementById('achievement-popup'),
