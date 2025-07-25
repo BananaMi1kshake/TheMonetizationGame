@@ -87,8 +87,9 @@
 
     <div class="container mx-auto max-w-4xl p-4 relative">
 
-        <header class="bg-gray-800 text-white p-4 rounded-lg shadow-lg mb-4">
+        <header class="bg-gray-800 text-white p-4 rounded-lg shadow-lg mb-4 relative">
             <h1 class="text-3xl font-bold text-center">Monetization Simulator</h1>
+            <button id="help-button" class="absolute top-3 right-3 bg-blue-500 hover:bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold">?</button>
         </header>
 
         <div class="bg-gray-900 text-white p-3 rounded-lg shadow-md mb-4 sticky top-2 z-50 flex justify-around items-center text-center">
@@ -219,6 +220,29 @@
             <button id="close-event-details-modal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
             <h2 class="text-2xl font-bold mb-2" id="event-details-title"></h2>
             <p class="my-4" id="event-details-description"></p>
+        </div>
+    </div>
+    
+    <div id="tutorial-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md mx-4 text-left relative">
+            <button id="close-tutorial-modal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <h2 class="text-2xl font-bold mb-4 text-center">Welcome to the Team!</h2>
+            <div class="space-y-3 text-gray-700">
+                <p>Your goal is to make money by turning leads into profitable assets. Here’s how:</p>
+                <div class="p-3 bg-gray-100 rounded-md">
+                    <h3 class="font-bold">Step 1: Get Leads</h3>
+                    <p>On the <strong>Sales</strong> screen, click the <strong>"Generate Lead"</strong> button to gather leads.</p>
+                </div>
+                <div class="p-3 bg-gray-100 rounded-md">
+                    <h3 class="font-bold">Step 2: Earn Money</h3>
+                    <p>Switch to the <strong>Accounts</strong> screen. Clicking <strong>"Develop Lead"</strong> uses your leads to increase your income rate ($/s).</p>
+                </div>
+                 <div class="p-3 bg-gray-100 rounded-md">
+                    <h3 class="font-bold">Step 3: Grow Your Business</h3>
+                    <p>Use your money to hire <strong>Staff</strong> (who automate clicks) and buy <strong>Upgrades</strong> (to improve efficiency).</p>
+                </div>
+            </div>
+             <button id="start-game-btn" class="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded-md font-semibold hover:bg-blue-600">Let's Go!</button>
         </div>
     </div>
 
