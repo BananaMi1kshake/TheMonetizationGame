@@ -1,9 +1,24 @@
 // game.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
 // Main game logic for Monetization Simulator.
 // Assumes all other scripts (dom, staff, upgrades, achievements, events, ui) are loaded.
 
 const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well...`;
 const adScriptContent = `// Monetization Script\nfunction showAd() {...}`;
+
+// --- Firebase Initialization ---
+let db, auth;
+try {
+    const app = initializeApp(window.firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+} catch (error) {
+    console.error("Firebase initialization failed. Leaderboard will be disabled.", error);
+}
+
 
 class MonetizationGame {
     constructor() {
@@ -12,6 +27,7 @@ class MonetizationGame {
         this.activeIntervals = [];
         this.holdInterval = null;
         this.isKeyPressed = {};
+        this.userId = null;
     }
 
     // --- State Management ---
@@ -79,6 +95,7 @@ class MonetizationGame {
         delete stateToSave.activeIntervals;
         delete stateToSave.holdInterval;
         delete stateToSave.isKeyPressed;
+        delete stateToSave.userId; // Don't save userId to localStorage
         stateToSave.hiredStaff = Array.from(this.hiredStaff);
         stateToSave.lastSavedTime = Date.now();
         localStorage.setItem('monetizationSimSave_v2', JSON.stringify(stateToSave));
@@ -126,10 +143,39 @@ class MonetizationGame {
         }
     }
 
-    reset() {
+    async reset() {
+        if (db && this.userId) {
+            await deleteDoc(doc(db, "companies", this.userId));
+        }
         localStorage.removeItem('monetizationSimSave_v2');
-        localStorage.removeItem('tutorialCompleted_v1'); // Also clear tutorial flag on reset
+        localStorage.removeItem('tutorialCompleted_v1');
         location.reload();
+    }
+
+    // --- Firebase Leaderboard ---
+    async updateLeaderboard() {
+        if (!db || !this.userId) return;
+        const companyData = {
+            ownerName: this.playerName,
+            companyName: this.companyName,
+            money: this.money,
+            lastUpdated: new Date()
+        };
+        await setDoc(doc(db, "companies", this.userId), companyData, { merge: true });
+    }
+
+    listenToLeaderboard() {
+        if (!db) return;
+        const companiesCol = collection(db, "companies");
+        onSnapshot(companiesCol, (snapshot) => {
+            const companies = [];
+            snapshot.forEach(doc => {
+                companies.push(doc.data());
+            });
+            // Sort by money descending
+            companies.sort((a, b) => b.money - a.money);
+            UI.renderLeaderboard(companies);
+        });
     }
 
     // --- Core Gameplay ---
@@ -320,6 +366,7 @@ class MonetizationGame {
         checkAchievements(this);
         UI.renderAll(this);
         this.save();
+        this.updateLeaderboard();
     }
     
     restartIntervals() {
@@ -395,7 +442,6 @@ class MonetizationGame {
         
         const closeTutorialAndPromptName = () => {
             UI.hideTutorial();
-            // Only show name prompt if it was the first time seeing the tutorial
             if (!localStorage.getItem('tutorialCompleted_v1')) {
                 UI.showNameInputModal();
             }
@@ -415,7 +461,8 @@ class MonetizationGame {
             
             UI.hideNameInputModal();
             UI.renderAll(this);
-            this.save(); // Save the new names
+            this.save();
+            this.updateLeaderboard(); // Initial post to leaderboard
         });
     }
     
@@ -438,7 +485,17 @@ class MonetizationGame {
         setupHold(DOM.developLeadBtn, () => this.developLead(true));
     }
 
-    start() {
+    async start() {
+        if (auth) {
+            try {
+                const userCredential = await signInAnonymously(auth);
+                this.userId = userCredential.user.uid;
+                this.listenToLeaderboard();
+            } catch (error) {
+                console.error("Anonymous sign-in failed:", error);
+            }
+        }
+
         this.setupEventListeners();
         if (this.upgrades.coffeeMachine.purchased) {
             this.applyCoffeeMachineListeners();
@@ -447,7 +504,6 @@ class MonetizationGame {
         UI.renderAll(this);
         setInterval(() => this.mainLoop(), 1000);
 
-        // Check if tutorial has been completed
         if (!localStorage.getItem('tutorialCompleted_v1')) {
             UI.showTutorial();
         }
@@ -455,7 +511,12 @@ class MonetizationGame {
 }
 
 // --- Game Initialization ---
-window.onload = () => {
-    const game = new MonetizationGame();
-    game.start();
-};
+window.addEventListener('load', () => {
+    // Ensure firebaseConfig is loaded before starting the game
+    if (window.firebaseConfig) {
+        const game = new MonetizationGame();
+        game.start();
+    } else {
+        console.error("Firebase config not found. Game cannot start.");
+    }
+});
