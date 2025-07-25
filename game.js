@@ -466,18 +466,18 @@ class MonetizationGame {
         DOM.globalLeadCount.textContent = this.leads;
         DOM.globalMoneyCount.textContent = this.money.toFixed(2);
         DOM.globalRate.textContent = this.getPassiveIncome().toFixed(2);
-        DOM.globalLeadGenRate.textContent = this.getLeadGenerationRatePerSecond().toFixed(2) + '/s';
-        DOM.globalLeadDevRate.textContent = this.getLeadDevelopmentRatePerSecond().toFixed(2) + '/s';
     }
     
     updateSalesScreen() {
         DOM.emailText.textContent = emailContent.substring(0, this.emailCharIndex);
+        DOM.salesLeadGenRate.textContent = this.getLeadGenerationRatePerSecond().toFixed(2) + '/s';
     }
 
     updateAccountScreen() {
         DOM.adScriptText.textContent = adScriptContent.substring(0, this.adCharIndex);
         const progress = this.clicksToDevelopLead > 0 ? (this.developClicks / this.clicksToDevelopLead) * 100 : 0;
         DOM.progressBar.style.width = `${progress}%`;
+        DOM.accountsLeadDevRate.textContent = this.getLeadDevelopmentRatePerSecond().toFixed(2) + '/s';
     }
 
     renderStaff() {
