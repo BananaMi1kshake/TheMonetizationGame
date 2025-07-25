@@ -18,7 +18,7 @@ const upgradeData = {
             newAdNetworks: { name: 'New Ad Networks', desc: (g) => `Each developed lead earns +$${g.upgrades.newAdNetworks.incomeBonus.toFixed(2)} more. Current: $${g.incomePerLead.toFixed(2)}`, cost: 10, costMultiplier: 2, maxLevel: 0, incomeBonus: 0.01, onPurchase: (g) => { g.upgrades.newAdNetworks.level++; g.incomePerLead += g.upgrades.newAdNetworks.incomeBonus; } },
             backgroundMusic: { name: 'Background Music', desc: (g) => `+${g.upgrades.backgroundMusic.level} click/sec to each Accounts staff.`, cost: 80, costMultiplier: 15, maxLevel: 0, onPurchase: (g) => { g.upgrades.backgroundMusic.level++; } },
             cpmOptimization: { name: 'CPM Optimization', desc: (g) => `${(g.upgrades.cpmOptimization.chance * 100).toFixed(0)}% chance to double money from a lead.`, cost: 500, costMultiplier: 3, maxLevel: 0, chance: 0, onPurchase: (g) => { g.upgrades.cpmOptimization.level++; g.upgrades.cpmOptimization.chance = Math.min(1, g.upgrades.cpmOptimization.chance + 0.2); }, isMaxed: (g) => g.upgrades.cpmOptimization.chance >= 1 },
-            goingToTheShop: { name: 'Going to the shop', desc: (g) => `Reduces the time between each staff click by 0.1s. Current reduction: ${(g.upgrades.goingToTheShop.level * 0.1).toFixed(1)}s`, cost: 10, costMultiplier: 5, maxLevel: 0, onPurchase: (g) => { g.upgrades.goingToTheShop.level++; } }
+            goingToTheShop: { name: 'Going to the shop', desc: (g) => `Reduces the time between each staff click by 0.1s. Current reduction: ${(g.upgrades.goingToTheShop.level * 0.1).toFixed(1)}s`, cost: 10, costMultiplier: 3, maxLevel: 0, onPurchase: (g) => { g.upgrades.goingToTheShop.level++; } }
         }
     },
     global: {
