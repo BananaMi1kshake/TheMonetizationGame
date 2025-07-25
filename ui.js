@@ -244,5 +244,24 @@ const UI = {
 
     renderCompanyName(game) {
         DOM.companyNameDisplay.textContent = game.companyName;
+    },
+
+    renderLeaderboard(companies) {
+        DOM.leaderboardBody.innerHTML = '';
+        if (companies.length === 0) {
+            DOM.leaderboardBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">No companies on the leaderboard yet!</td></tr>`;
+            return;
+        }
+        companies.forEach((company, index) => {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-200 hover:bg-gray-100';
+            row.innerHTML = `
+                <td class="py-3 px-4">${index + 1}</td>
+                <td class="py-3 px-4">${company.companyName}</td>
+                <td class="py-3 px-4">${company.ownerName}</td>
+                <td class="py-3 px-4">$${company.money.toFixed(2)}</td>
+            `;
+            DOM.leaderboardBody.appendChild(row);
+        });
     }
 };
