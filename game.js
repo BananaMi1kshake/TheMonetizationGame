@@ -126,6 +126,7 @@ class MonetizationGame {
 
     reset() {
         localStorage.removeItem('monetizationSimSave_v2');
+        localStorage.removeItem('tutorialCompleted_v1'); // Also clear tutorial flag on reset
         location.reload();
     }
 
@@ -388,7 +389,7 @@ class MonetizationGame {
         timer.onclick = () => showEventDetails(this);
 
         // Tutorial Listeners
-        DOM.helpButton.addEventListener('click', () => UI.showTutorial());
+        DOM.helpButtons.forEach(btn => btn.addEventListener('click', () => UI.showTutorial()));
         DOM.tutorialModal.closeBtn.addEventListener('click', () => UI.hideTutorial());
         DOM.tutorialModal.startBtn.addEventListener('click', () => UI.hideTutorial());
     }
