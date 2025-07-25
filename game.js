@@ -299,13 +299,21 @@ class MonetizationGame {
     // --- Rate & Interval Calculation ---
     getBaseStaffInterval() {
         let baseInterval = 1000;
+        
+        // Apply the "Going to the shop" upgrade bonus
+        if (this.upgrades.goingToTheShop) {
+            baseInterval -= this.upgrades.goingToTheShop.level * 100; // 0.1s = 100ms
+        }
+
         if (this.upgrades.amirsAutomation.purchased) baseInterval /= 2;
         if (this.activeEvent) {
             if (this.activeEvent.key === 'productivityGuru') baseInterval *= 0.5;
             if (this.activeEvent.key === 'teamBurnout') baseInterval *= 1.25;
         }
         if (this.settings.allStaffSpeedMultiplier) baseInterval *= this.settings.allStaffSpeedMultiplier;
-        return baseInterval;
+        
+        // Ensure the interval doesn't become too fast or negative
+        return Math.max(100, baseInterval); 
     }
 
     getEffectiveSalesStaffInterval() { return this.getBaseStaffInterval() * 1.5; }
