@@ -16,3 +16,27 @@ const achievementData = {
     }},
     crisisAverted: { name: "Crisis Averted", description: "Successfully navigate a \"Server Crash\" event by waiting it out instead of paying.", condition: (g) => g.stats.waitedOutServerCrash }
 };
+
+function checkAchievements(game) {
+    let changed = false;
+    for (const key in achievementData) {
+        if (!game.achievements[key].unlocked && achievementData[key].condition(game)) {
+            game.achievements[key].unlocked = true;
+            showAchievementPopup(achievementData[key]);
+            changed = true;
+        }
+    }
+    if (changed) UI.renderAchievements(game);
+}
+
+function showAchievementPopup(achievement) {
+    const popup = DOM.achievementPopup;
+    popup.title.textContent = achievement.name;
+    popup.desc.textContent = achievement.description;
+    popup.el.classList.remove('opacity-0', 'translate-y-10');
+    popup.el.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+        popup.el.classList.remove('opacity-100', 'translate-y-0');
+        popup.el.classList.add('opacity-0', 'translate-y-10');
+    }, 4000);
+}
