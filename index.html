@@ -179,7 +179,8 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body" class="text-gray-700">
-                        </tbody>
+                        <!-- Rows will be inserted here by JavaScript -->
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -293,6 +294,7 @@
         <p class="text-sm text-center" id="active-event-time-left"></p>
     </div>
     
+    <!-- Game Scripts -->
     <script src="staff.js"></script>
     <script src="dom.js"></script>
     <script src="upgrades.js"></script>
@@ -300,16 +302,16 @@
     <script src="events.js"></script>
     <script src="ui.js"></script>
     
+    <!-- Firebase and Main Game Logic (as modules) -->
     <script type="module">
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBLQ4bJF7DDbByVLaUbfhMiflFCgY3OPnU",
-            authDomain: "monetization-leaderboard.firebaseapp.com",
-            projectId: "monetization-leaderboard",
-            storageBucket: "monetization-leaderboard.firebasestorage.app",
-            messagingSenderId: "80383950282",
-            appId: "1:80383950282:web:a585094c5bb080d8f92333"
-    
+            authDomain: "monetization-leaderboard.firebaseapp.com",
+            projectId: "monetization-leaderboard",
+            storageBucket: "monetization-leaderboard.appspot.com",
+            messagingSenderId: "80383950282",
+            appId: "1:80383950282:web:a585094c5bb080d8f92333"
         };
         window.firebaseConfig = firebaseConfig;
     </script>
