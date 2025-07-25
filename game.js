@@ -50,6 +50,8 @@ class MonetizationGame {
             isLeadGenerationHalted: false,
             emailCharIndex: 0,
             adCharIndex: 0,
+            playerName: "Manager",
+            companyName: "Monetization Simulator",
         };
     }
 
@@ -388,10 +390,33 @@ class MonetizationGame {
         timer.onmouseover = () => showEventDetails(this);
         timer.onclick = () => showEventDetails(this);
 
-        // Tutorial Listeners
+        // Tutorial and Name Input Listeners
         DOM.helpButtons.forEach(btn => btn.addEventListener('click', () => UI.showTutorial()));
-        DOM.tutorialModal.closeBtn.addEventListener('click', () => UI.hideTutorial());
-        DOM.tutorialModal.startBtn.addEventListener('click', () => UI.hideTutorial());
+        
+        const closeTutorialAndPromptName = () => {
+            UI.hideTutorial();
+            // Only show name prompt if it was the first time seeing the tutorial
+            if (!localStorage.getItem('tutorialCompleted_v1')) {
+                UI.showNameInputModal();
+            }
+            localStorage.setItem('tutorialCompleted_v1', 'true');
+        };
+
+        DOM.tutorialModal.closeBtn.addEventListener('click', closeTutorialAndPromptName);
+        DOM.tutorialModal.startBtn.addEventListener('click', closeTutorialAndPromptName);
+
+        DOM.nameInputModal.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const playerName = DOM.nameInputModal.playerNameInput.value.trim();
+            const companyName = DOM.nameInputModal.companyNameInput.value.trim();
+            
+            this.playerName = playerName || "Manager";
+            this.companyName = companyName || "My Company";
+            
+            UI.hideNameInputModal();
+            UI.renderAll(this);
+            this.save(); // Save the new names
+        });
     }
     
     applyCoffeeMachineListeners() {
