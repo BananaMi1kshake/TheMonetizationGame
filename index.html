@@ -91,8 +91,6 @@
             <h1 class="text-3xl font-bold text-center">Monetization Simulator</h1>
         </header>
 
-        
-
         <div class="bg-gray-900 text-white p-3 rounded-lg shadow-md mb-4 sticky top-2 z-50 flex justify-around items-center text-center">
             <div>
                 <span class="text-sm text-gray-400">Leads</span>
@@ -106,15 +104,7 @@
                 <span class="text-sm text-gray-400">Rate</span>
                 <p class="text-xl font-semibold">$<span id="globalRate">0.00</span>/s</p>
             </div>
-            <div>
-                <span class="text-sm text-gray-400">Lead Gen Rate</span>
-                <p class="text-xl font-semibold" id="globalLeadGenRate">0.00/s</p>
-            </div>
-            <div>
-                <span class="text-sm text-gray-400">Lead Dev Rate</span>
-                <p class="text-xl font-semibold" id="globalLeadDevRate">0.00/s</p>
-            </div>
-            </div>
+        </div>
 
         <div id="nav-buttons" class="bg-white rounded-lg shadow-md p-2 mb-4 flex flex-wrap justify-center gap-2">
             <button data-screen="salesScreen" class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Sales</button>
@@ -126,14 +116,26 @@
         </div>
 
         <div id="salesScreen" class="screen active p-4 bg-white rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold mb-4">Sales Screen</h2>
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-bold">Sales Screen</h2>
+                 <div class="text-right">
+                    <span class="text-sm font-medium text-gray-500">Lead Generation Rate</span>
+                    <p class="text-xl font-bold text-green-600" id="salesLeadGenRate">0.00/s</p>
+                </div>
+            </div>
             <button id="generateLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-green-500 text-white font-bold text-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105">Generate Lead</button>
             <div id="salesOffice" class="office-space"></div>
             <div id="emailText" class="mt-4 p-4 h-48 bg-gray-900 text-green-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
         </div>
 
         <div id="accountScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold mb-4">Accounts Screen</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Accounts Screen</h2>
+                <div class="text-right">
+                    <span class="text-sm font-medium text-gray-500">Lead Development Rate</span>
+                    <p class="text-xl font-bold text-indigo-600" id="accountsLeadDevRate">0.00/s</p>
+                </div>
+            </div>
             <button id="developLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-indigo-500 text-white font-bold text-lg shadow-md hover:bg-indigo-600 transition-transform transform hover:scale-105">Develop Lead</button>
             <div id="accountsOffice" class="office-space"></div>
             <div class="w-full bg-gray-200 rounded-full h-6 mt-4 overflow-hidden shadow-inner">
@@ -230,7 +232,7 @@
     <script src="upgrades.js"></script>
     <script src="achievements.js"></script>
     <script src="events.js"></script>
-    <script src="ui.js"></script> <!-- NEW FILE -->
+    <script src="ui.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
