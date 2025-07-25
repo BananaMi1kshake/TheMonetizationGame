@@ -183,11 +183,16 @@ const UI = {
     },
 
     renderSettings(game) {
+        // Toggle buttons
         DOM.toggleOfflineProgress.textContent = game.settings.offlineProgress ? 'ON' : 'OFF';
         DOM.toggleOfflineProgress.className = `px-4 py-1 rounded-full font-semibold text-sm ${game.settings.offlineProgress ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
         
         DOM.toggleStaffAnimation.textContent = game.settings.staffTextAnimation ? 'ON' : 'OFF';
         DOM.toggleStaffAnimation.className = `px-4 py-1 rounded-full font-semibold text-sm ${game.settings.staffTextAnimation ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+
+        // Set current names in input fields
+        DOM.editPlayerNameInput.value = game.playerName;
+        DOM.editCompanyNameInput.value = game.companyName;
     },
 
     showScreen(id) {
