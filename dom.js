@@ -24,6 +24,7 @@ const DOM = {
     toggleOfflineProgress: document.getElementById('toggleOfflineProgress'),
     toggleStaffAnimation: document.getElementById('toggleStaffAnimation'),
     helpButtons: document.querySelectorAll('.help-icon-button'),
+    companyNameDisplay: document.getElementById('companyNameDisplay'),
     // Modals & Popups
     achievementPopup: {
         el: document.getElementById('achievement-popup'),
@@ -52,6 +53,13 @@ const DOM = {
         el: document.getElementById('tutorial-modal'),
         closeBtn: document.getElementById('close-tutorial-modal'),
         startBtn: document.getElementById('start-game-btn'),
+    },
+    nameInputModal: {
+        el: document.getElementById('name-input-modal'),
+        form: document.getElementById('name-input-form'),
+        playerNameInput: document.getElementById('playerNameInput'),
+        companyNameInput: document.getElementById('companyNameInput'),
+        confirmBtn: document.getElementById('confirmNameBtn')
     },
     activeEventTimer: {
         el: document.getElementById('active-event-timer'),
