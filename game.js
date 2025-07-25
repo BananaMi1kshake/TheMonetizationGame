@@ -6,9 +6,6 @@ import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc } from "ht
 // Main game logic for Monetization Simulator.
 // Assumes all other scripts (dom, staff, upgrades, achievements, events, ui) are loaded.
 
-const emailContent = `Dear Valued Client,\n\nWe hope this message finds you well...`;
-const adScriptContent = `// Monetization Script\nfunction showAd() {...}`;
-
 // --- Firebase Initialization ---
 let db, auth;
 try {
