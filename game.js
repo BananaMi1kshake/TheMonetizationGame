@@ -442,6 +442,24 @@ class MonetizationGame {
         timer.onmouseover = () => showEventDetails(this);
         timer.onclick = () => showEventDetails(this);
 
+        // Listener for the new update names button
+        DOM.updateNamesBtn.addEventListener('click', () => {
+            const newPlayerName = DOM.editPlayerNameInput.value.trim();
+            const newCompanyName = DOM.editCompanyNameInput.value.trim();
+
+            this.playerName = newPlayerName || "Manager";
+            this.companyName = newCompanyName || "My Company";
+
+            this.updateLeaderboard(); // Update Firebase
+            this.save(); // Save to local storage
+            UI.renderAll(this); // Re-render UI to show changes
+
+            // Provide user feedback
+            const originalText = DOM.updateNamesBtn.textContent;
+            DOM.updateNamesBtn.textContent = 'Updated!';
+            setTimeout(() => { DOM.updateNamesBtn.textContent = originalText; }, 1500);
+        });
+
         // Tutorial and Name Input Listeners
         DOM.helpButtons.forEach(btn => btn.addEventListener('click', () => UI.showTutorial()));
         
