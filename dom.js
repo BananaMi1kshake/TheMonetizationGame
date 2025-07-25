@@ -3,10 +3,10 @@ const DOM = {
     globalLeadCount: document.getElementById('globalLeadCount'),
     globalMoneyCount: document.getElementById('globalMoneyCount'),
     globalRate: document.getElementById('globalRate'),
-    globalLeadGenRate: document.getElementById('globalLeadGenRate'), // NEW
-    globalLeadDevRate: document.getElementById('globalLeadDevRate'), // NEW
-    salesOffice: document.getElementById('salesOffice'), // ADD THIS
-    accountsOffice: document.getElementById('accountsOffice'), // ADD THIS
+    salesLeadGenRate: document.getElementById('salesLeadGenRate'), // NEW
+    accountsLeadDevRate: document.getElementById('accountsLeadDevRate'), // NEW
+    salesOffice: document.getElementById('salesOffice'),
+    accountsOffice: document.getElementById('accountsOffice'),
     navButtons: document.getElementById('nav-buttons'),
     screens: document.querySelectorAll('.screen'),
     generateLeadBtn: document.getElementById('generateLeadBtn'),
