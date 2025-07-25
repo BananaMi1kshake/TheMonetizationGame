@@ -386,6 +386,11 @@ class MonetizationGame {
         const timer = DOM.activeEventTimer.el;
         timer.onmouseover = () => showEventDetails(this);
         timer.onclick = () => showEventDetails(this);
+
+        // Tutorial Listeners
+        DOM.helpButton.addEventListener('click', () => UI.showTutorial());
+        DOM.tutorialModal.closeBtn.addEventListener('click', () => UI.hideTutorial());
+        DOM.tutorialModal.startBtn.addEventListener('click', () => UI.hideTutorial());
     }
     
     applyCoffeeMachineListeners() {
@@ -415,6 +420,11 @@ class MonetizationGame {
         this.restartIntervals();
         UI.renderAll(this);
         setInterval(() => this.mainLoop(), 1000);
+
+        // Check if tutorial has been completed
+        if (!localStorage.getItem('tutorialCompleted_v1')) {
+            UI.showTutorial();
+        }
     }
 }
 
