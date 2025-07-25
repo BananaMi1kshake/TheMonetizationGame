@@ -76,6 +76,7 @@
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-30px); }
         }
+        /* Style for disabled buttons */
         button:disabled {
             cursor: not-allowed;
             filter: grayscale(80%);
@@ -87,8 +88,10 @@
     <div class="container mx-auto max-w-4xl p-4 relative">
 
         <header class="bg-gray-800 text-white p-4 rounded-lg shadow-lg mb-4">
-            <h1 class="text-3xl font-bold text-center" id="companyNameHeader">Monetization Simulator</h1>
+            <h1 class="text-3xl font-bold text-center">Monetization Simulator</h1>
         </header>
+
+        
 
         <div class="bg-gray-900 text-white p-3 rounded-lg shadow-md mb-4 sticky top-2 z-50 flex justify-around items-center text-center">
             <div>
@@ -103,7 +106,15 @@
                 <span class="text-sm text-gray-400">Rate</span>
                 <p class="text-xl font-semibold">$<span id="globalRate">0.00</span>/s</p>
             </div>
-        </div>
+            <div>
+                <span class="text-sm text-gray-400">Lead Gen Rate</span>
+                <p class="text-xl font-semibold" id="globalLeadGenRate">0.00/s</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-400">Lead Dev Rate</span>
+                <p class="text-xl font-semibold" id="globalLeadDevRate">0.00/s</p>
+            </div>
+            </div>
 
         <div id="nav-buttons" class="bg-white rounded-lg shadow-md p-2 mb-4 flex flex-wrap justify-center gap-2">
             <button data-screen="salesScreen" class="px-4 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Sales</button>
@@ -112,198 +123,114 @@
             <button data-screen="upgradesScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Upgrades</button>
             <button data-screen="achievementsScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Achievements</button>
             <button data-screen="statsScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Statistics</button>
-            <button data-screen="leaderboardScreen" class="px-4 py-2 rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Leaderboard</button>
         </div>
 
-        <!-- Game Screens -->
         <div id="salesScreen" class="screen active p-4 bg-white rounded-lg shadow-md">
-            <!-- ... (content remains the same) ... -->
+            <h2 class="text-2xl font-bold mb-4">Sales Screen</h2>
+            <button id="generateLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-green-500 text-white font-bold text-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105">Generate Lead</button>
+            <div id="salesOffice" class="office-space"></div>
+            <div id="emailText" class="mt-4 p-4 h-48 bg-gray-900 text-green-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
         </div>
+
         <div id="accountScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-            <!-- ... (content remains the same) ... -->
+            <h2 class="text-2xl font-bold mb-4">Accounts Screen</h2>
+            <button id="developLeadBtn" class="w-full md:w-auto px-6 py-3 rounded-lg bg-indigo-500 text-white font-bold text-lg shadow-md hover:bg-indigo-600 transition-transform transform hover:scale-105">Develop Lead</button>
+            <div id="accountsOffice" class="office-space"></div>
+            <div class="w-full bg-gray-200 rounded-full h-6 mt-4 overflow-hidden shadow-inner">
+                <div id="progressBar" class="bg-indigo-600 h-6 rounded-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+            <div id="adScriptText" class="mt-4 p-4 h-48 bg-gray-900 text-cyan-400 font-mono rounded-lg overflow-y-auto text-left whitespace-pre-wrap shadow-inner"></div>
         </div>
+
         <div id="staffScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-            <!-- ... (content remains the same) ... -->
+            <h2 class="text-2xl font-bold mb-4">Staff</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Hired Staff</h3>
+                    <ul id="hiredStaffList" class="list-disc list-inside bg-gray-100 p-3 rounded-lg min-h-[100px]"></ul>
+                </div>
+                <div id="staff-for-hire" class="space-y-4"></div>
+            </div>
         </div>
+
         <div id="upgradesScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-            <!-- ... (content remains the same) ... -->
-        </div>
-        <div id="achievementsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-            <!-- ... (content remains the same) ... -->
-        </div>
-        <div id="statsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-            <!-- ... (content remains the same) ... -->
+            <h2 class="text-2xl font-bold mb-4">Upgrades</h2>
+            <div id="upgrades-container" class="space-y-6"></div>
         </div>
         
-        <!-- NEW: Leaderboard Screen -->
-        <div id="leaderboardScreen" class="screen p-4 bg-white rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold mb-4">Top Companies</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white">
-                    <thead class="bg-gray-800 text-white">
-                        <tr>
-                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Rank</th>
-                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Company</th>
-                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Founder</th>
-                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Total Earned</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body" class="text-gray-700">
-                        <!-- Rows will be inserted here by JavaScript -->
-                    </tbody>
-                </table>
+        <div id="achievementsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Achievements</h2>
+            <div id="achievementsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            
+            <div class="mt-8 border-t-2 border-gray-200 pt-6">
+                <h3 class="text-xl font-bold mb-4 text-center">Settings</h3>
+                <div class="max-w-md mx-auto space-y-3">
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+                        <label for="toggleOfflineProgress" class="font-semibold text-gray-700">Enable Offline Progress</label>
+                        <button id="toggleOfflineProgress" class="px-4 py-1 rounded-full font-semibold text-sm"></button>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+                        <label for="toggleStaffAnimation" class="font-semibold text-gray-700">Enable Staff Text Animation</label>
+                        <button id="toggleStaffAnimation" class="px-4 py-1 rounded-full font-semibold text-sm"></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center space-x-4">
+                <button id="manualSaveBtn" class="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Manual Save</button>
+                <button id="resetProgressBtn" class="px-4 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Reset Progress</button>
             </div>
         </div>
+
+        <div id="statsScreen" class="screen p-4 bg-white rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Statistics</h2>
+            <div id="statisticsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
     </div>
     
-    <!-- Popups and Modals -->
     <div id="achievement-popup" class="fixed bottom-5 right-5 bg-gray-900 text-white p-4 rounded-lg shadow-2xl opacity-0 transform translate-y-10 pointer-events-none">
-        <!-- ... (content remains the same) ... -->
-    </div>
-    <div id="welcome-back-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <!-- ... (content remains the same) ... -->
-    </div>
-    <div id="event-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-        <!-- ... (content remains the same) ... -->
-    </div>
-    <div id="event-details-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-        <!-- ... (content remains the same) ... -->
-    </div>
-    <div id="active-event-timer" class="fixed bottom-5 left-5 bg-gray-900 text-white p-3 rounded-lg shadow-2xl hidden z-40 cursor-pointer">
-        <!-- ... (content remains the same) ... -->
+        <h3 class="font-bold text-lg text-yellow-400" id="achievement-title"></h3>
+        <p class="text-sm" id="achievement-desc"></p>
     </div>
 
-    <!-- NEW: Player Name Input Modal -->
-    <div id="player-info-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm mx-4">
-            <h2 class="text-2xl font-bold mb-4">Welcome, Founder!</h2>
-            <p class="mb-4 text-gray-600">Let's get your company set up. What should we call it?</p>
-            <div class="space-y-4">
-                <input type="text" id="companyNameInput" placeholder="Your Company Name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" maxlength="50">
-                <input type="text" id="playerNameInput" placeholder="Your Name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" maxlength="50">
-                <button id="submitPlayerInfoBtn" class="w-full px-4 py-2 bg-blue-500 text-white rounded-md font-semibold hover:bg-blue-600">Found Company</button>
-            </div>
+    <div id="welcome-back-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+            <h2 class="text-2xl font-bold mb-4">Welcome Back!</h2>
+            <p>While you were away, your team earned:</p>
+            <p class="text-xl font-semibold my-2" id="offline-earnings"></p>
+            <button id="close-welcome-modal" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">Great!</button>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <div id="event-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm relative mx-4">
+            <button id="close-event-modal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <h2 class="text-2xl font-bold mb-2" id="event-title"></h2>
+            <p class="my-4" id="event-description"></p>
+            <div id="event-choices" class="mt-4 space-y-2 sm:space-y-0 sm:space-x-2 flex flex-col sm:flex-row justify-center"></div>
+        </div>
+    </div>
 
-        // IMPORTANT: These are placeholders that will be replaced by the environment.
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <div id="event-details-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm relative mx-4">
+            <button id="close-event-details-modal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <h2 class="text-2xl font-bold mb-2" id="event-details-title"></h2>
+            <p class="my-4" id="event-details-description"></p>
+        </div>
+    </div>
 
-        try {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            setLogLevel('debug');
+    <div id="active-event-timer" class="fixed bottom-5 left-5 bg-gray-900 text-white p-3 rounded-lg shadow-2xl hidden z-40 cursor-pointer">
+        <h4 class="font-bold text-md" id="active-event-title"></h4>
+        <p class="text-sm text-center" id="active-event-time-left"></p>
+    </div>
 
-            // Make db and auth globally available for game.js
-            window.db = db;
-            window.auth = auth;
-
-            // Authenticate the user
-            if (authToken) {
-                await signInWithCustomToken(auth, authToken);
-            } else {
-                await signInAnonymously(auth);
-            }
-            // Signal that Firebase is ready
-            document.dispatchEvent(new Event('firebaseReady'));
-
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-            // Optionally, disable online features if Firebase fails
-            document.body.innerHTML += '<div class="text-center text-red-500">Could not connect to online services.</div>';
-        }
-    </script>
-    
-    <!-- Game Scripts -->
     <script src="staff.js"></script>
     <script src="dom.js"></script>
     <script src="upgrades.js"></script>
     <script src="achievements.js"></script>
     <script src="events.js"></script>
+    <script src="ui.js"></script> <!-- NEW FILE -->
     <script src="game.js"></script>
 </body>
 </html>
-```
-
-### 2. `dom.js` (Updated)
-
-Here, we just need to add references to the new modal and leaderboard elements we created in the HTML.
-
-
-```javascript
-// dom.js
-const DOM = {
-    globalLeadCount: document.getElementById('globalLeadCount'),
-    globalMoneyCount: document.getElementById('globalMoneyCount'),
-    globalRate: document.getElementById('globalRate'),
-    salesLeadGenRate: document.getElementById('salesLeadGenRate'),
-    accountsLeadDevRate: document.getElementById('accountsLeadDevRate'),
-    salesOffice: document.getElementById('salesOffice'),
-    accountsOffice: document.getElementById('accountsOffice'),
-    navButtons: document.getElementById('nav-buttons'),
-    screens: document.querySelectorAll('.screen'),
-    generateLeadBtn: document.getElementById('generateLeadBtn'),
-    developLeadBtn: document.getElementById('developLeadBtn'),
-    emailText: document.getElementById('emailText'),
-    adScriptText: document.getElementById('adScriptText'),
-    progressBar: document.getElementById('progressBar'),
-    hiredStaffList: document.getElementById('hiredStaffList'),
-    staffForHire: document.getElementById('staff-for-hire'),
-    upgradesContainer: document.getElementById('upgrades-container'),
-    achievementsList: document.getElementById('achievementsList'),
-    statisticsList: document.getElementById('statisticsList'),
-    manualSaveBtn: document.getElementById('manualSaveBtn'),
-    resetProgressBtn: document.getElementById('resetProgressBtn'),
-    toggleOfflineProgress: document.getElementById('toggleOfflineProgress'),
-    toggleStaffAnimation: document.getElementById('toggleStaffAnimation'),
-    companyNameHeader: document.getElementById('companyNameHeader'), // NEW
-    
-    // NEW: Leaderboard elements
-    leaderboardBody: document.getElementById('leaderboard-body'),
-
-    // NEW: Player Info Modal
-    playerInfoModal: {
-        el: document.getElementById('player-info-modal'),
-        companyNameInput: document.getElementById('companyNameInput'),
-        playerNameInput: document.getElementById('playerNameInput'),
-        submitBtn: document.getElementById('submitPlayerInfoBtn'),
-    },
-
-    // Modals & Popups
-    achievementPopup: {
-        el: document.getElementById('achievement-popup'),
-        title: document.getElementById('achievement-title'),
-        desc: document.getElementById('achievement-desc'),
-    },
-    welcomeModal: {
-        el: document.getElementById('welcome-back-modal'),
-        earnings: document.getElementById('offline-earnings'),
-        closeBtn: document.getElementById('close-welcome-modal'),
-    },
-    eventModal: {
-        el: document.getElementById('event-modal'),
-        title: document.getElementById('event-title'),
-        description: document.getElementById('event-description'),
-        choices: document.getElementById('event-choices'),
-        closeBtn: document.getElementById('close-event-modal'),
-    },
-    eventDetailsModal: {
-        el: document.getElementById('event-details-modal'),
-        title: document.getElementById('event-details-title'),
-        description: document.getElementById('event-details-description'),
-        closeBtn: document.getElementById('close-event-details-modal'),
-    },
-    activeEventTimer: {
-        el: document.getElementById('active-event-timer'),
-        title: document.getElementById('active-event-title'),
-        timeLeft: document.getElementById('active-event-time-left'),
-    }
-};
