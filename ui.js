@@ -223,5 +223,14 @@ const UI = {
         popup.style.color = text.includes('+') ? (text.includes('$') ? '#10B981' : '#84CC16') : '#EF4444';
         document.body.appendChild(popup);
         setTimeout(() => popup.remove(), 1000);
+    },
+
+    showTutorial() {
+        DOM.tutorialModal.el.classList.remove('hidden');
+    },
+
+    hideTutorial() {
+        DOM.tutorialModal.el.classList.add('hidden');
+        localStorage.setItem('tutorialCompleted_v1', 'true');
     }
 };
